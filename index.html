@@ -100,14 +100,70 @@ input::placeholder{color:var(--steel);opacity:.7}
 .savebar .btn{min-height:56px;font-size:18px}
 .more{display:flex;gap:20px;flex-wrap:wrap;margin-top:8px}
 
+/* calendar + previous record */
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-top:4px}
+.cal-nav h2{font-size:22px;font-weight:700}
+.cal-head,.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-head{margin-top:10px}
+.cal-head span{text-align:center;font-size:13px;color:var(--steel);padding:6px 0}
+.cal button{aspect-ratio:1;border:1.5px solid transparent;border-radius:10px;background:transparent;padding:0;font-family:var(--num);font-size:21px;font-weight:600;color:var(--ink)}
+.cal .plan{border:1.5px dashed var(--steel)}
+.cal .done{background:var(--ink);color:var(--bg)}
+.cal .today{color:var(--blue)}
+.cal .today.done{background:var(--blue);color:var(--on-blue)}
+.cal .sel{outline:3px solid var(--blue);outline-offset:1px}
+.legend{display:flex;gap:18px;font-size:13px;color:var(--steel);margin-top:12px}
+.legend i{display:inline-block;width:14px;height:14px;border-radius:4px;margin-right:6px;vertical-align:-2px}
+.legend .d{background:var(--ink)}
+.legend .p{border:1.5px dashed var(--steel)}
+.prev{margin-top:14px;font-size:15px;color:var(--steel)}
+.prev-sets{font-size:17px;color:var(--ink)}
+.prev-sets b{color:var(--blue);font-weight:700}
+.prev .link{padding:4px 0;min-height:40px;font-size:15px}
+.steppers.two{grid-template-columns:1fr 1fr}
+.steppers.two .stepper{grid-template-columns:44px 1fr 44px}
+.steppers.two .num{font-size:32px}
+
+/* schedule */
+.sec{font-size:15px;font-weight:600;color:var(--steel);margin:26px 0 8px}
+.sec.now{font-size:20px;font-weight:700;color:var(--ink);margin-top:12px}
+.restday{color:var(--steel);padding:6px 0 4px}
+.ok{color:var(--green);font-weight:700}
+.week>li{display:grid;grid-template-columns:40px 1fr;gap:8px;padding:11px 0;border-bottom:1px solid var(--line)}
+.week>li:first-child{border-top:1px solid var(--line)}
+.week b{font-weight:700;color:var(--steel)}
+.week span{color:var(--steel);overflow-wrap:anywhere}
+.week .has span{color:var(--ink);font-weight:500}
+.week .today b{color:var(--blue)}
+.week .today span{font-weight:700}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.days button{min-height:46px;padding:0;border:1.5px solid var(--line);border-radius:10px;background:transparent;font-weight:600}
+.days button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+/* picker */
+.pair2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.chips{display:flex;gap:8px;overflow-x:auto;margin:12px -20px 4px;padding:2px 20px 8px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;min-height:44px;padding:0 16px;border-radius:22px;border:1.5px solid var(--line);background:transparent;font-weight:600;white-space:nowrap}
+.chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.pick-list>li{border-bottom:1px solid var(--line)}
+.pick-row{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:58px;padding:8px 0;border:0;background:none;text-align:left;font-size:18px;font-weight:600}
+.pick-row em{font-style:normal;font-size:14px;font-weight:700;color:var(--blue);white-space:nowrap}
+.pick-row.on span{color:var(--blue)}
+.pick-row.custom span{color:var(--steel)}
+.pick-none{padding:20px 0;color:var(--steel)}
+.savebar.one{grid-template-columns:1fr}
+
 /* run */
 .run-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.run-top .elapsed{font-size:26px;color:var(--steel)}
+.run-top .elapsed{font-size:34px;color:var(--steel)}
+.run-top.big{flex-wrap:wrap}
+.run-top.big .elapsed{order:3;flex-basis:100%;font-size:min(30vw,15vh,136px);line-height:.9;color:var(--ink);margin-top:6px}
 .work,.rest{flex:1;display:flex;flex-direction:column;justify-content:center;padding:16px 0}
 .pos{color:var(--steel);font-size:15px;font-weight:500}
 .ex-title{font-size:32px;line-height:1.2;font-weight:700;letter-spacing:-.01em;overflow-wrap:anywhere;margin:2px 0 10px}
 .setline{display:flex;align-items:baseline;gap:10px}
-.setline .big{font-size:112px;line-height:.9}
+.setline .big{font-size:min(112px,13vh);line-height:.9}
 .setline .of{font-family:var(--num);font-weight:600;font-size:34px;color:var(--steel)}
 .segs{display:flex;gap:6px;margin:14px 0 22px}
 .segs i{flex:1;max-width:64px;height:10px;border-radius:3px;background:var(--line)}
@@ -119,7 +175,8 @@ input::placeholder{color:var(--steel);opacity:.7}
 .stepper div{text-align:center}
 .stepper .num{font-size:40px;line-height:1}
 .stepper small{font-size:15px;color:var(--steel);margin-left:4px}
-.run-actions{display:grid;gap:10px}
+.run-actions{display:grid;gap:10px;position:sticky;bottom:0;background:var(--bg);padding:10px 0 calc(4px + env(safe-area-inset-bottom,0px))}
+body.is-rest .run-actions{background:transparent}
 .run-actions .pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .hint{color:var(--steel);font-size:15px;min-height:1.5em}
 .phase{font-size:24px;font-weight:700}
@@ -178,7 +235,9 @@ var S = {
   run:LS.get(K.run),
   draft:null, editError:'', confirm:null, lastDone:null,
   sound:LS.get(K.sound)!==false,
-  sync:'connecting'
+  sync:'connecting',
+  cal:{y:new Date().getFullYear(),m:new Date().getMonth(),sel:null},
+  lastPrev:null
 };
 if(S.run && (!S.run.routine || !arr(S.run.routine.exercises).length)){S.run=null;LS.del(K.run);}
 if(S.run && S.run.phase==='rest' && S.run.restEnd<=Date.now()){S.run.phase='work';}
@@ -233,7 +292,7 @@ function saveDoc(k){
 function mergeHist(extra,base){
   var seen={},out=[];
   extra.concat(base).forEach(function(e){if(e&&e.id&&!seen[e.id]){seen[e.id]=1;out.push(e);}});
-  return out.slice(0,60);
+  return out.slice(0,200);
 }
 function onSnap(k){
   return function(snap){
@@ -315,6 +374,14 @@ document.addEventListener('visibilitychange',function(){
 });
 
 /* ---------- routine helpers ---------- */
+var DAYS=['일','월','화','수','목','금','토'];
+var WEEK=[1,2,3,4,5,6,0];
+function dayLabel(days){
+  days=arr(days);
+  if(!days.length) return '';
+  if(days.length===7) return '매일';
+  return '매주 '+WEEK.filter(function(d){return days.indexOf(d)>=0;}).map(function(d){return DAYS[d];}).join(', ');
+}
 function estimateMin(rt){
   var sec=0, ex=rt.exercises;
   ex.forEach(function(e){sec+=e.sets*45+(e.sets-1)*e.rest;});
@@ -323,7 +390,7 @@ function estimateMin(rt){
 }
 function blankEx(prev){return {id:newId(),name:'',sets:prev?prev.sets:'3',reps:prev?prev.reps:'10',weight:'',rest:prev?prev.rest:'90'};}
 function toDraft(rt){
-  return {id:rt.id,isNew:false,name:rt.name,transition:String(rt.transition),
+  return {id:rt.id,isNew:false,name:rt.name,days:arr(rt.days).slice(),transition:String(rt.transition),
     exercises:rt.exercises.map(function(e){return {id:e.id,name:e.name,sets:String(e.sets),reps:String(e.reps),weight:e.weight?kg(e.weight):'',rest:String(e.rest)};})};
 }
 function sampleRoutine(){
@@ -344,14 +411,34 @@ function vHome(){
        '<button class="btn line" data-act="discard">'+(S.confirm==='discard'?'한 번 더 누르면 버림':'버리기')+'</button></div></section>';
   }
   if(S.routines.length){
-    h+='<ul class="routines">'+S.routines.map(function(rt){
-      var sets=rt.exercises.reduce(function(a,e){return a+e.sets;},0);
+    var now=new Date(),dow=now.getDay(),todayKey=now.toDateString(),doneToday={};
+    S.history.forEach(function(e){if(e.routineId&&new Date(e.endedAt).toDateString()===todayKey) doneToday[e.routineId]=1;});
+    var item=function(rt,isToday){
+      var sets=rt.exercises.reduce(function(a,e){return a+e.sets;},0),dl=dayLabel(rt.days);
       return '<li><h2 class="rt-name">'+esc(rt.name)+'</h2>'+
-        '<p class="rt-meta">운동 '+rt.exercises.length+'개, '+sets+'세트, 약 '+estimateMin(rt)+'분</p>'+
+        '<p class="rt-meta">'+(dl?dl+'<br>':'')+'운동 '+rt.exercises.length+'개, '+sets+'세트, 약 '+estimateMin(rt)+'분'+
+        (isToday&&doneToday[rt.id]?'<br><span class="ok">오늘 완료했어요</span>':'')+'</p>'+
         '<div class="rt-actions"><button class="btn primary" data-act="start" data-id="'+esc(rt.id)+'">운동 시작</button>'+
         '<button class="btn line" data-act="edit" data-id="'+esc(rt.id)+'">편집</button></div></li>';
-    }).join('')+'</ul>';
+    };
+    var on=function(r,d){return arr(r.days).indexOf(d)>=0;};
+    var scheduled=S.routines.some(function(r){return arr(r.days).length;});
+    if(scheduled){
+      var today=S.routines.filter(function(r){return on(r,dow);}),others=S.routines.filter(function(r){return !on(r,dow);});
+      h+='<h2 class="sec now">오늘, '+DAYS[dow]+'요일</h2>';
+      h+=today.length?'<ul class="routines">'+today.map(function(r){return item(r,true);}).join('')+'</ul>'
+        :'<p class="restday">오늘은 정해 둔 루틴이 없는 날이에요.</p>';
+      if(others.length) h+='<h2 class="sec">다른 루틴</h2><ul class="routines">'+others.map(function(r){return item(r,false);}).join('')+'</ul>';
+    }else{
+      h+='<ul class="routines">'+S.routines.map(function(r){return item(r,false);}).join('')+'</ul>';
+    }
     h+='<div class="stack"><button class="btn line wide" data-act="new">새 루틴 만들기</button></div>';
+    if(scheduled){
+      h+='<h2 class="sec">주간 일정</h2><ul class="week">'+WEEK.map(function(d){
+        var names=S.routines.filter(function(r){return on(r,d);}).map(function(r){return esc(r.name);});
+        return '<li class="'+(d===dow?'today ':'')+(names.length?'has':'')+'"><b>'+DAYS[d]+'</b><span>'+(names.length?names.join(', '):'쉬는 날')+'</span></li>';
+      }).join('')+'</ul>';
+    }
   }else{
     h+='<section class="empty"><h2>아직 루틴이 없어요</h2>'+
        '<p>운동 순서, 세트와 횟수, 휴식 시간을 정해 두면 세트를 끝낼 때마다 휴식 타이머가 알아서 돌아가요.</p>'+
@@ -366,6 +453,9 @@ function vEdit(){
   var d=S.draft, n=d.exercises.length;
   var h='<header class="top"><h1>'+(d.isNew?'새 루틴':'루틴 편집')+'</h1></header>';
   h+='<label class="field"><span>루틴 이름</span><input type="text" data-f="name" maxlength="40" placeholder="예: 가슴과 삼두" value="'+esc(d.name)+'"></label>';
+  h+='<div class="field"><span>하는 요일 (안 골라도 돼요)</span><div class="days">'+WEEK.map(function(x){
+    return '<button data-act="day" data-d="'+x+'" aria-pressed="'+(d.days.indexOf(x)>=0)+'" aria-label="'+DAYS[x]+'요일">'+DAYS[x]+'</button>';
+  }).join('')+'</div></div>';
   h+='<ol class="exs">'+d.exercises.map(function(e,i){
     return '<li class="ex" data-i="'+i+'">'+
       '<div class="ex-head"><span class="ord">'+(i+1)+'</span>'+
@@ -379,10 +469,11 @@ function vEdit(){
       '<div class="ex-tools">'+
       '<button data-act="ex-up"'+(i===0?' disabled':'')+' aria-label="위로 옮기기">위로</button>'+
       '<button data-act="ex-down"'+(i===n-1?' disabled':'')+' aria-label="아래로 옮기기">아래로</button>'+
-      '<button class="rm" data-act="ex-rm"'+(n===1?' disabled':'')+'>빼기</button>'+
+      '<button class="rm" data-act="ex-rm">빼기</button>'+
       '</div></li>';
   }).join('')+'</ol>';
-  h+='<button class="btn line wide" data-act="ex-add">운동 추가</button>';
+  if(!n) h+='<p class="rt-meta">아직 담은 운동이 없어요. 목록에서 골라 담거나 직접 적어 보세요.</p>';
+  h+='<div class="pair2"><button class="btn solid" data-act="pick-open">운동 고르기</button><button class="btn line" data-act="ex-add">직접 입력</button></div>';
   h+='<label class="field"><span>다음 운동으로 넘어갈 때 휴식 (초)</span><input type="text" inputmode="numeric" data-f="transition" value="'+esc(d.transition)+'"></label>';
   if(!d.isNew){
     h+='<div class="more"><button class="link" data-act="dup">이 루틴 복제</button>'+
@@ -395,7 +486,7 @@ function vEdit(){
 
 function vRun(){
   var R=S.run, exs=R.routine.exercises, ex=exs[R.ex];
-  var h='<header class="run-top"><button class="link" data-act="end">'+(S.confirm==='end'?'한 번 더 누르면 종료':'끝내기')+'</button>'+
+  var h='<header class="run-top'+(R.phase==='rest'?'':' big')+'"><button class="link" data-act="end">'+(S.confirm==='end'?'한 번 더 누르면 종료':'끝내기')+'</button>'+
         '<span class="elapsed num" id="elapsed">'+fmt((Date.now()-R.startedAt)/1000)+'</span>'+
         '<button class="link" data-act="sound" aria-pressed="'+S.sound+'">'+(S.sound?'소리 켜짐':'소리 꺼짐')+'</button></header>';
   if(R.phase==='rest'){
@@ -418,7 +509,7 @@ function vRun(){
   h+='<main class="work"><p class="pos">'+(R.ex+1)+'번째 운동, 전체 '+exs.length+'개</p>'+
      '<h1 class="ex-title">'+esc(ex.name)+'</h1>'+
      '<p class="setline"><span class="num big">'+(R.set+1)+'</span><span class="of">/ '+ex.sets+' 세트</span></p>'+
-     '<div class="segs" aria-hidden="true">'+segs+'</div><div class="steppers">';
+     '<div class="segs" aria-hidden="true">'+segs+'</div><div class="steppers'+(R.cur.weight?' two':'')+'">';
   if(R.cur.weight){
     h+='<div class="stepper"><button data-act="w-dec" aria-label="무게 2.5kg 줄이기">−</button>'+
        '<div><span class="num">'+kg(R.cur.weight)+'</span><small>kg</small></div>'+
@@ -426,7 +517,7 @@ function vRun(){
   }
   h+='<div class="stepper"><button data-act="r-dec" aria-label="횟수 줄이기">−</button>'+
      '<div><span class="num">'+R.cur.reps+'</span><small>회</small></div>'+
-     '<button data-act="r-inc" aria-label="횟수 늘리기">+</button></div></div></main>';
+     '<button data-act="r-inc" aria-label="횟수 늘리기">+</button></div></div>'+prevHtml(ex.name,R.set,R.cur)+'</main>';
   h+='<footer class="run-actions"><p class="hint">'+hint+'</p>'+
      '<button class="btn primary huge" data-act="done-set">세트 완료</button>'+
      '<div class="pair"><button class="btn line" data-act="undo"'+(R.log.length?'':' disabled')+'>이전 세트로</button>'+
@@ -447,13 +538,40 @@ function vDone(){
   var e=S.lastDone;
   return '<header class="top"><h1>운동 끝</h1></header>'+
     '<p class="pos">'+esc(e.routineName)+'</p>'+
-    '<p class="done-time num">'+fmt(e.durationSec)+'</p>'+facts(e)+logList(e.items)+
+    '<p class="done-time num">'+fmt(e.durationSec)+'</p>'+facts(e)+doneDelta(e)+logList(e.items)+
     '<div class="stack"><button class="btn primary wide" data-act="home">루틴 목록으로</button></div>';
 }
-function vHistory(){
-  var h='<header class="top"><h1>운동 기록</h1><button class="link" data-act="home">루틴 목록</button></header>';
-  if(!S.history.length) return h+'<section class="empty"><h2>아직 기록이 없어요</h2><p>루틴을 끝내면 날짜, 걸린 시간, 세트별 무게와 횟수가 여기에 남아요.</p></section>';
-  h+='<ul class="hist">'+S.history.map(function(e){
+function lastRecord(name){
+  for(var i=0;i<S.history.length;i++){
+    var it=arr(S.history[i].items).find(function(x){return x.name===name;});
+    if(it&&arr(it.sets).length) return {at:S.history[i].endedAt,sets:it.sets};
+  }
+  return null;
+}
+function prevHtml(name,setIdx,cur){
+  var p=lastRecord(name);
+  if(!p) return '<div class="prev"><p>이 운동은 오늘이 첫 기록이에요.</p></div>';
+  var d=new Date(p.at);
+  var line=p.sets.map(function(s,i){var t=esc(target(s.reps,s.weight));return i===setIdx?'<b>'+t+'</b>':t;}).join(', ');
+  var s=p.sets[setIdx],diff='';
+  if(s){
+    var dw=(cur.weight||0)-(s.weight||0),dr=cur.reps-s.reps,parts=[];
+    if(dw) parts.push((dw>0?'+':'−')+kg(Math.abs(dw))+'kg');
+    if(dr) parts.push((dr>0?'+':'−')+Math.abs(dr)+'회');
+    diff=parts.length
+      ?'<p>지금 설정은 지난번 이 세트보다 '+parts.join(', ')+' <button class="link" data-act="prev-load">지난번 값으로</button></p>'
+      :'<p>지금 설정이 지난번 이 세트와 같아요.</p>';
+  }
+  return '<div class="prev"><p>지난번 '+(d.getMonth()+1)+'월 '+d.getDate()+'일</p><p class="prev-sets">'+line+'</p>'+diff+'</div>';
+}
+function doneDelta(e){
+  var p=S.lastPrev;
+  if(!p||!e.volume||!p.volume) return '';
+  var dv=Math.round(e.volume-p.volume);
+  return '<p class="rt-meta">같은 루틴 지난번'+(dv?'보다 볼륨 '+(dv>0?'+':'−')+Math.abs(dv).toLocaleString('ko-KR')+'kg':'과 볼륨이 같아요')+'</p>';
+}
+function durText(sec){var m=Math.round(sec/60),hh=Math.floor(m/60);return hh?hh+'시간 '+(m%60)+'분':m+'분';}
+function histItem(e){
     var d=new Date(e.endedAt);
     var date=d.toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'short'});
     return '<li><details><summary><span class="h-name">'+esc(e.routineName)+'</span><br>'+
@@ -461,15 +579,104 @@ function vHistory(){
       logList(e.items)+
       '<button class="link" style="color:var(--red)" data-act="hist-del" data-id="'+esc(e.id)+'">'+(S.confirm==='hist:'+e.id?'한 번 더 누르면 삭제':'이 기록 삭제')+'</button>'+
       '</details></li>';
-  }).join('')+'</ul>';
+}
+function vHistory(){
+  var c=S.cal,now=new Date(),nd=new Date(c.y,c.m+1,0).getDate(),lead=(new Date(c.y,c.m,1).getDay()+6)%7;
+  var by={},monthList=[],sec=0,i,day;
+  S.history.forEach(function(e){
+    var d=new Date(e.endedAt);
+    if(d.getFullYear()===c.y&&d.getMonth()===c.m){(by[d.getDate()]=by[d.getDate()]||[]).push(e);monthList.push(e);sec+=e.durationSec;}
+  });
+  var isThis=now.getFullYear()===c.y&&now.getMonth()===c.m;
+  var upcoming=function(n){return new Date(c.y,c.m,n,23,59,59)>=now;};
+  var planned=function(n){var w=new Date(c.y,c.m,n).getDay();return S.routines.filter(function(r){return arr(r.days).indexOf(w)>=0;});};
+  var anyPlan=S.routines.some(function(r){return arr(r.days).length;});
+  var h='<header class="top"><h1>운동 기록</h1><button class="link" data-act="home">루틴 목록</button></header>';
+  h+='<div class="cal-nav"><button class="link" data-act="cal-prev">이전 달</button><h2>'+c.y+'년 '+(c.m+1)+'월</h2><button class="link" data-act="cal-next">다음 달</button></div>';
+  h+='<p class="rt-meta" style="margin:0">'+(monthList.length?'운동 '+monthList.length+'회, 총 '+durText(sec):'이 달에는 기록이 없어요.')+'</p>';
+  h+='<div class="cal-head" aria-hidden="true">'+WEEK.map(function(d){return '<span>'+DAYS[d]+'</span>';}).join('')+'</div><div class="cal">';
+  for(i=0;i<lead;i++) h+='<i></i>';
+  for(day=1;day<=nd;day++){
+    var cls=[];
+    if(by[day]) cls.push('done'); else if(upcoming(day)&&planned(day).length) cls.push('plan');
+    if(isThis&&day===now.getDate()) cls.push('today');
+    if(c.sel===day) cls.push('sel');
+    h+='<button class="'+cls.join(' ')+'" data-act="cal-day" data-d="'+day+'" aria-pressed="'+(c.sel===day)+'" aria-label="'+(c.m+1)+'월 '+day+'일'+(by[day]?', 운동 '+by[day].length+'회':'')+'">'+day+'</button>';
+  }
+  h+='</div><p class="legend"><span><i class="d"></i>운동한 날</span>'+(anyPlan?'<span><i class="p"></i>루틴 예정</span>':'')+'</p>';
+  var list=c.sel?(by[c.sel]||[]):monthList;
+  if(c.sel) h+='<h2 class="sec">'+(c.m+1)+'월 '+c.sel+'일 '+DAYS[new Date(c.y,c.m,c.sel).getDay()]+'요일</h2>';
+  else if(list.length) h+='<h2 class="sec">'+(c.m+1)+'월 기록</h2>';
+  if(list.length) h+='<ul class="hist">'+list.map(histItem).join('')+'</ul>';
+  else if(c.sel){
+    var p=upcoming(c.sel)?planned(c.sel):[];
+    h+='<p class="restday">'+(p.length?'예정된 루틴: '+p.map(function(r){return esc(r.name);}).join(', '):'기록이 없는 날이에요.')+'</p>';
+  }
   return h;
 }
-var VIEWS={home:vHome,edit:vEdit,run:vRun,done:vDone,history:vHistory};
+var LIB=[
+  ['가슴',['벤치프레스','인클라인 벤치프레스','덤벨 벤치프레스','인클라인 덤벨프레스','체스트프레스 머신','덤벨 플라이','펙덱 플라이','케이블 크로스오버','딥스','푸시업']],
+  ['등',['풀업','랫풀다운','바벨로우','덤벨로우','시티드 케이블로우','티바로우','암풀다운','데드리프트','백 익스텐션']],
+  ['어깨',['오버헤드프레스','덤벨 숄더프레스','사이드 레터럴 레이즈','프론트 레이즈','벤트오버 레터럴 레이즈','페이스풀','리버스 펙덱','슈러그']],
+  ['팔',['바벨컬','덤벨컬','해머컬','프리처컬','케이블 푸시다운','라잉 트라이셉스 익스텐션','오버헤드 트라이셉스 익스텐션','클로즈그립 벤치프레스']],
+  ['하체',['스쿼트','프론트 스쿼트','레그프레스','런지','불가리안 스플릿 스쿼트','레그 익스텐션','레그컬','루마니안 데드리프트','힙쓰러스트','카프레이즈']],
+  ['코어',['크런치','레그레이즈','행잉 레그레이즈','러시안 트위스트','케이블 크런치','앱 롤아웃']]
+];
+var LIBSET={};
+LIB.forEach(function(c){c[1].forEach(function(n){LIBSET[n]=1;});});
+function norm(s){return String(s).replace(/\s+/g,'').toLowerCase();}
+function myExercises(){
+  var seen={},out=[];
+  S.routines.forEach(function(r){r.exercises.forEach(function(e){
+    if(!LIBSET[e.name]&&!seen[e.name]){seen[e.name]=1;out.push(e.name);}
+  });});
+  return out;
+}
+function pickNames(){
+  var q=norm(S.pick.q),mine=myExercises();
+  if(q){
+    var all=mine.slice();
+    LIB.forEach(function(c){all=all.concat(c[1]);});
+    return all.filter(function(n){return norm(n).indexOf(q)>=0;});
+  }
+  if(S.pick.cat==='내 운동') return mine;
+  var c=LIB.find(function(c){return c[0]===S.pick.cat;});
+  return c?c[1]:[];
+}
+function pickListHtml(){
+  var names=pickNames(),have={};
+  S.draft.exercises.forEach(function(e){have[e.name.trim()]=1;});
+  var h=names.map(function(n){
+    var on=!!have[n];
+    return '<li><button class="pick-row'+(on?' on':'')+'" data-act="pick-toggle" data-name="'+esc(n)+'" aria-pressed="'+on+'"><span>'+esc(n)+'</span><em>'+(on?'담음':'')+'</em></button></li>';
+  }).join('');
+  var q=S.pick.q.trim();
+  if(q&&names.indexOf(q)<0&&!have[q]){
+    h+='<li><button class="pick-row custom" data-act="pick-toggle" data-custom="1" data-name="'+esc(q)+'"><span>“'+esc(q)+'” 직접 추가</span><em></em></button></li>';
+  }
+  return h||'<li class="pick-none">맞는 운동이 없어요.</li>';
+}
+function pickDoneLabel(){
+  var n=S.draft.exercises.filter(function(e){return e.name.trim();}).length;
+  return n?'편집으로 돌아가기 (운동 '+n+'개)':'편집으로 돌아가기';
+}
+function vPick(){
+  var mine=myExercises();
+  var cats=(mine.length?['내 운동']:[]).concat(LIB.map(function(c){return c[0];}));
+  return '<header class="top"><h1>운동 고르기</h1></header>'+
+    '<input type="text" id="pick-q" maxlength="60" placeholder="운동 이름 검색 또는 직접 입력" aria-label="운동 검색" value="'+esc(S.pick.q)+'">'+
+    '<div class="chips">'+cats.map(function(c){
+      return '<button class="chip'+(c===S.pick.cat&&!S.pick.q.trim()?' on':'')+'" data-act="pick-cat" data-cat="'+esc(c)+'">'+esc(c)+'</button>';
+    }).join('')+'</div>'+
+    '<ul class="pick-list" id="pick-list">'+pickListHtml()+'</ul>'+
+    '<div class="savebar one"><button class="btn primary" data-act="pick-done">'+pickDoneLabel()+'</button></div>';
+}
+var VIEWS={home:vHome,edit:vEdit,pick:vPick,run:vRun,done:vDone,history:vHistory};
 
 var lastView=null, confirmTimer=null;
 function render(){
   if(S.view==='run'&&!S.run) S.view='home';
-  if(S.view==='edit'&&!S.draft) S.view='home';
+  if((S.view==='edit'||S.view==='pick')&&!S.draft) S.view='home';
   if(S.view==='done'&&!S.lastDone) S.view='home';
   var resting=S.view==='run'&&S.run.phase==='rest';
   document.body.classList.toggle('is-rest',resting);
@@ -529,8 +736,10 @@ function finishRun(){
     if(l.weight) volume+=l.weight*l.reps;
   });
   var now=Date.now();
-  var entry={id:newId(),routineName:R.routine.name,startedAt:R.startedAt,endedAt:now,
+  var entry={id:newId(),routineId:R.routine.id,routineName:R.routine.name,startedAt:R.startedAt,endedAt:now,
     durationSec:Math.round((now-R.startedAt)/1000),setCount:R.log.length,volume:volume,items:items};
+  var prevSame=S.history.find(function(x){return x.routineId?x.routineId===R.routine.id:x.routineName===R.routine.name;});
+  S.lastPrev=prevSame?{volume:prevSame.volume}:null;
   S.history=mergeHist([entry],S.history);
   if(refs.history&&!conf.history){pendingHist.push(entry);LS.set(K.history,S.history);}
   else saveDoc('history');
@@ -564,7 +773,7 @@ function saveDraft(){
       weight:(isNaN(w)||w<=0)?null:Math.min(999,w),rest:toInt(x.rest,0,3600,90)};
   });
   if(!exs.length){S.editError='운동 이름을 하나 이상 적어야 저장할 수 있어요.';render();return;}
-  var rt={id:d.id,name:d.name.trim().slice(0,40)||'이름 없는 루틴',transition:toInt(d.transition,0,3600,120),exercises:exs};
+  var rt={id:d.id,name:d.name.trim().slice(0,40)||'이름 없는 루틴',days:arr(d.days).slice().sort(),transition:toInt(d.transition,0,3600,120),exercises:exs};
   var i=S.routines.findIndex(function(r){return r.id===rt.id;});
   if(i>=0) S.routines[i]=rt; else S.routines.push(rt);
   saveDoc('routines');
@@ -574,7 +783,19 @@ function exIndex(b){return +b.closest('[data-i]').dataset.i;}
 
 /* ---------- actions ---------- */
 var ACT={
-  'new':function(){S.draft={id:newId(),isNew:true,name:'',transition:'120',exercises:[blankEx()]};S.editError='';go('edit');},
+  'new':function(){S.draft={id:newId(),isNew:true,name:'',days:[],transition:'120',exercises:[]};S.editError='';go('edit');},
+  day:function(b){var x=+b.dataset.d,a=S.draft.days,i=a.indexOf(x);if(i>=0) a.splice(i,1); else a.push(x);render();},
+  'pick-open':function(){S.pick={cat:'가슴',q:''};go('pick');},
+  'pick-cat':function(b){S.pick.cat=b.dataset.cat;S.pick.q='';render();},
+  'pick-toggle':function(b){
+    var name=b.dataset.name,e=S.draft.exercises,idx=-1,i;
+    for(i=e.length-1;i>=0;i--){if(e[i].name.trim()===name){idx=i;break;}}
+    if(idx>=0) e.splice(idx,1);
+    else{var x=blankEx(e[e.length-1]);x.name=name;e.push(x);}
+    if(b.dataset.custom) S.pick.q='';
+    render();
+  },
+  'pick-done':function(){go('edit');},
   sample:function(){S.routines.push(sampleRoutine());saveDoc('routines');render();},
   edit:function(b){var rt=S.routines.find(function(r){return r.id===b.dataset.id;});if(rt){S.draft=toDraft(rt);S.editError='';go('edit');}},
   start:function(b){
@@ -583,7 +804,14 @@ var ACT={
   },
   resume:function(){acquireWake();go('run');},
   discard:function(){twoStep('discard',function(){S.run=null;persistRun();render();});},
-  history:function(){go('history');},
+  history:function(){var n=new Date();S.cal={y:n.getFullYear(),m:n.getMonth(),sel:null};go('history');},
+  'cal-prev':function(){var c=S.cal;c.m--;if(c.m<0){c.m=11;c.y--;}c.sel=null;render();},
+  'cal-next':function(){var c=S.cal;c.m++;if(c.m>11){c.m=0;c.y++;}c.sel=null;render();},
+  'cal-day':function(b){var n=+b.dataset.d;S.cal.sel=S.cal.sel===n?null:n;render();},
+  'prev-load':function(){
+    var R=S.run,p=lastRecord(R.routine.exercises[R.ex].name),s=p&&p.sets[R.set];
+    if(s){R.cur={reps:s.reps,weight:s.weight||R.cur.weight};persistRun();render();}
+  },
   home:function(){go('home');},
   cancel:function(){S.draft=null;S.editError='';go('home');},
   save:saveDraft,
@@ -594,7 +822,7 @@ var ACT={
   'ex-down':function(b){var i=exIndex(b),e=S.draft.exercises;if(i<e.length-1){e.splice(i+1,0,e.splice(i,1)[0]);render();}},
   dup:function(){
     var rt=S.routines.find(function(r){return r.id===S.draft.id;}); if(!rt) return;
-    var c=clone(rt);c.id=newId();c.name=(c.name+' 복사본').slice(0,40);
+    var c=clone(rt);c.id=newId();c.days=[];c.name=(c.name+' 복사본').slice(0,40);
     c.exercises.forEach(function(e){e.id=newId();});
     S.routines.push(c);saveDoc('routines');S.draft=null;go('home');
   },
@@ -626,8 +854,16 @@ document.addEventListener('click',function(e){
   if(fn) fn(b);
 });
 document.addEventListener('input',function(e){
+  var t=e.target;
+  if(S.view==='pick'&&S.draft&&t.id==='pick-q'){
+    S.pick.q=t.value;
+    document.getElementById('pick-list').innerHTML=pickListHtml();
+    var q=t.value.trim();
+    Array.prototype.forEach.call($app.querySelectorAll('.chip'),function(c){c.classList.toggle('on',!q&&c.dataset.cat===S.pick.cat);});
+    return;
+  }
   if(S.view!=='edit'||!S.draft) return;
-  var t=e.target,f=t.dataset.f; if(!f) return;
+  var f=t.dataset.f; if(!f) return;
   var li=t.closest('[data-i]');
   if(li) S.draft.exercises[+li.dataset.i][f]=t.value; else S.draft[f]=t.value;
 });
