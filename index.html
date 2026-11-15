@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>루틴 타이머</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF0F2; --surface:#FFFFFF; --ink:#14181D; --steel:#56616D; --line:#C9D0D7;
+  --blue:#1F4FD8; --on-blue:#FFFFFF; --red:#C8321F; --green:#1E8A4C;
+  --plate-yellow:#F2B705; --plate-pale:#FBEFC2; --rest-ink:#14181D;
+  --text:"IBM Plex Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --num:"Barlow Condensed","IBM Plex Sans KR",system-ui,"Apple SD Gothic Neo",sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#12161B; --surface:#1B2128; --ink:#E9EDF1; --steel:#97A3B0; --line:#2E3740;
+    --blue:#6C97FF; --on-blue:#0B1220; --red:#FF7A66; --green:#4CC585;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#12161B; --surface:#1B2128; --ink:#E9EDF1; --steel:#97A3B0; --line:#2E3740;
+  --blue:#6C97FF; --on-blue:#0B1220; --red:#FF7A66; --green:#4CC585;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px);-webkit-text-size-adjust:100%}
+body{
+  margin:0;min-height:100%;display:flex;flex-direction:column;
+  background:var(--bg);color:var(--ink);
+  font-family:var(--text);font-size:16px;line-height:1.5;
+  -webkit-tap-highlight-color:transparent;
+}
+body.is-rest{--bg:var(--plate-pale);--ink:var(--rest-ink);--steel:#4A4326;--line:rgba(20,24,29,.28)}
+#drain{position:fixed;inset:0;background:var(--plate-yellow);transform-origin:bottom;transform:scaleY(1);transition:transform .25s linear;display:none;z-index:0}
+body.is-rest #drain{display:block}
+#app{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;width:100%;max-width:520px;margin:0 auto;padding:20px 20px 24px}
+h1,h2,p,ul,ol{margin:0;padding:0}
+ul,ol{list-style:none}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;touch-action:manipulation}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.num{font-family:var(--num);font-variant-numeric:tabular-nums;font-weight:700;letter-spacing:.01em}
+
+/* buttons */
+.btn{border:0;border-radius:10px;min-height:48px;padding:0 18px;font-weight:600;background:var(--surface);color:var(--ink)}
+.btn.primary{background:var(--blue);color:var(--on-blue)}
+.btn.solid{background:var(--ink);color:var(--bg)}
+.btn.line{background:transparent;border:1.5px solid var(--line)}
+.btn.huge{min-height:76px;font-size:24px;font-weight:700;width:100%;border-radius:14px}
+.btn.wide{width:100%}
+.btn.danger{color:var(--red)}
+.btn:disabled{opacity:.4;cursor:default}
+.btn:active:not(:disabled){transform:translateY(1px)}
+.link{background:none;border:0;padding:10px 0;min-height:44px;font-weight:600;color:var(--steel);text-decoration:underline;text-underline-offset:4px;text-decoration-color:var(--line)}
+
+/* home */
+.top{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px}
+.top h1{font-size:30px;font-weight:700;letter-spacing:-.01em}
+.resume{border:1.5px solid var(--blue);border-radius:12px;padding:14px 16px;margin:8px 0 12px}
+.resume p{font-weight:600;margin-bottom:10px}
+.resume .pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.routines>li{padding:20px 0;border-bottom:1px solid var(--line)}
+.routines>li:first-child{border-top:1px solid var(--line)}
+.rt-name{font-size:22px;font-weight:700;line-height:1.3;overflow-wrap:anywhere}
+.rt-meta{color:var(--steel);font-size:15px;margin:2px 0 14px}
+.rt-actions{display:grid;grid-template-columns:1fr auto;gap:10px}
+.rt-actions .btn.primary{min-height:56px;font-size:18px}
+.empty{padding:28px 0 8px}
+.empty h2{font-size:22px;font-weight:700;margin-bottom:6px}
+.empty p{color:var(--steel);margin-bottom:18px;max-width:34ch}
+.stack{display:grid;gap:10px;margin-top:20px}
+.sync{color:var(--steel);font-size:13px;margin-top:18px}
+
+/* edit */
+.field{display:block;margin:14px 0}
+.field>span{display:block;font-size:14px;color:var(--steel);margin-bottom:6px}
+input[type=text]{width:100%;min-height:48px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface);padding:0 12px;font-size:16px}
+input::placeholder{color:var(--steel);opacity:.7}
+.exs{margin-top:8px}
+.ex{padding:16px 0;border-top:1px solid var(--line)}
+.ex-head{display:grid;grid-template-columns:28px 1fr;gap:8px;align-items:center}
+.ord{font-family:var(--num);font-weight:700;font-size:24px;color:var(--steel)}
+.ex-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0 0 36px}
+.ex-grid label span{display:block;font-size:13px;color:var(--steel);margin-bottom:4px;white-space:nowrap}
+.ex-grid input{padding:0 8px;text-align:center;font-family:var(--num);font-size:22px;font-weight:600}
+.ex-tools{display:flex;gap:6px;margin:10px 0 0 36px}
+.ex-tools button{min-width:48px;min-height:40px;border:1.5px solid var(--line);border-radius:8px;background:transparent;font-size:14px;font-weight:600;color:var(--steel);padding:0 12px}
+.ex-tools button:disabled{opacity:.35}
+.ex-tools .rm{margin-left:auto}
+.err{color:var(--red);font-weight:600;margin:12px 0}
+.savebar{position:sticky;bottom:0;display:grid;grid-template-columns:1fr 2fr;gap:10px;background:var(--bg);padding:12px 0 calc(12px + env(safe-area-inset-bottom,0px));margin-top:20px;border-top:1px solid var(--line)}
+.savebar .btn{min-height:56px;font-size:18px}
+.more{display:flex;gap:20px;flex-wrap:wrap;margin-top:8px}
+
+/* run */
+.run-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.run-top .elapsed{font-size:26px;color:var(--steel)}
+.work,.rest{flex:1;display:flex;flex-direction:column;justify-content:center;padding:16px 0}
+.pos{color:var(--steel);font-size:15px;font-weight:500}
+.ex-title{font-size:32px;line-height:1.2;font-weight:700;letter-spacing:-.01em;overflow-wrap:anywhere;margin:2px 0 10px}
+.setline{display:flex;align-items:baseline;gap:10px}
+.setline .big{font-size:112px;line-height:.9}
+.setline .of{font-family:var(--num);font-weight:600;font-size:34px;color:var(--steel)}
+.segs{display:flex;gap:6px;margin:14px 0 22px}
+.segs i{flex:1;max-width:64px;height:10px;border-radius:3px;background:var(--line)}
+.segs i.done{background:var(--ink)}
+.segs i.now{background:var(--blue)}
+.steppers{display:grid;gap:10px}
+.stepper{display:grid;grid-template-columns:60px 1fr 60px;align-items:center;background:var(--surface);border-radius:12px;padding:6px}
+.stepper button{height:52px;border:0;border-radius:8px;background:var(--bg);font-size:26px;font-weight:600;line-height:1}
+.stepper div{text-align:center}
+.stepper .num{font-size:40px;line-height:1}
+.stepper small{font-size:15px;color:var(--steel);margin-left:4px}
+.run-actions{display:grid;gap:10px}
+.run-actions .pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hint{color:var(--steel);font-size:15px;min-height:1.5em}
+.phase{font-size:24px;font-weight:700}
+.timer{font-size:clamp(120px,42vw,220px);line-height:.88;margin:4px 0 14px -4px}
+.next{font-size:18px;line-height:1.45}
+.next strong{font-size:24px;font-weight:700}
+
+/* done + history */
+.done-time{font-size:112px;line-height:.9;margin:8px 0 4px}
+.facts{display:flex;gap:28px;margin:14px 0 22px}
+.facts .num{font-size:40px;line-height:1;display:block}
+.facts span{color:var(--steel);font-size:14px}
+.log li{padding:12px 0;border-top:1px solid var(--line)}
+.log b{display:block;font-weight:600}
+.log span{color:var(--steel);font-size:15px}
+.hist>li{border-bottom:1px solid var(--line)}
+.hist summary{list-style:none;padding:16px 0;cursor:pointer}
+.hist summary::-webkit-details-marker{display:none}
+.hist .h-name{font-size:18px;font-weight:700}
+.hist .h-meta{color:var(--steel);font-size:15px}
+.hist .log{margin-bottom:8px}
+
+@media (prefers-reduced-motion: reduce){#drain{transition:none}.btn:active{transform:none}}
+</style>
+</head>
+<body>
+<div id="drain" aria-hidden="true"></div>
+<div id="app"></div>
+<script>
+(function(){
+'use strict';
+
+/* ---------- helpers ---------- */
+var $app = document.getElementById('app');
+var $drain = document.getElementById('drain');
+var K = {routines:'rt.routines', history:'rt.history', run:'rt.run', sound:'rt.sound'};
+var LS = {
+  get:function(k){try{var v=localStorage.getItem(k);return v==null?null:JSON.parse(v);}catch(e){return null;}},
+  set:function(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}},
+  del:function(k){try{localStorage.removeItem(k);}catch(e){}}
+};
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function newId(){return Math.random().toString(36).slice(2,10)+Date.now().toString(36);}
+function clone(o){return JSON.parse(JSON.stringify(o));}
+function fmt(sec){sec=Math.max(0,Math.ceil(sec));var m=Math.floor(sec/60),s=sec%60;return m+':'+(s<10?'0':'')+s;}
+function kg(w){return String(parseFloat(Number(w).toFixed(2)));}
+function target(reps,weight){return weight?kg(weight)+'kg × '+reps+'회':reps+'회';}
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
+function arr(v){return Array.isArray(v)?v:[];}
+
+/* ---------- state ---------- */
+var S = {
+  view:'home',
+  routines:arr(LS.get(K.routines)),
+  history:arr(LS.get(K.history)),
+  run:LS.get(K.run),
+  draft:null, editError:'', confirm:null, lastDone:null,
+  sound:LS.get(K.sound)!==false,
+  sync:'connecting'
+};
+if(S.run && (!S.run.routine || !arr(S.run.routine.exercises).length)){S.run=null;LS.del(K.run);}
+if(S.run && S.run.phase==='rest' && S.run.restEnd<=Date.now()){S.run.phase='work';}
+
+var SYNC_TEXT = {
+  connecting:'저장된 루틴을 불러오는 중…',
+  synced:'계정에 저장돼 다른 기기에서도 열 수 있어요.',
+  local:'이 기기의 브라우저에만 저장돼요.',
+  stale:'서버 연결이 늦어지고 있어요. 최신 내용이 아닐 수 있어요.',
+  error:'서버에 저장하지 못했어요. 지금은 이 기기에만 저장돼요.'
+};
+
+/* ---------- remote storage (db) ---------- */
+var refs = {routines:null, history:null};
+var saver = {routines:{busy:false,dirty:false}, history:{busy:false,dirty:false}};
+var conf = {routines:false, history:false};
+var pendingHist = [];
+var loadTimer = null;
+
+function setSync(v){
+  S.sync=v;
+  var el=document.getElementById('sync');
+  if(el) el.textContent=SYNC_TEXT[v]||'';
+}
+function writeOnce(ref,data){
+  return ref.set(data).catch(function(e){
+    if(e && e.code==='unavailable'){
+      return sleep(600+Math.random()*600).then(function(){return ref.set(data);});
+    }
+    throw e;
+  });
+}
+function saveDoc(k){
+  LS.set(K[k],S[k]);
+  var ref=refs[k]; if(!ref) return;
+  var s=saver[k];
+  if(s.busy){s.dirty=true;return;}
+  s.busy=true;
+  (function loop(){
+    s.dirty=false;
+    return writeOnce(ref,{items:clone(S[k]),updatedAt:Date.now()}).then(function(){
+      if(s.dirty) return loop();
+    });
+  })().then(function(){
+    s.busy=false;
+    if(S.sync==='error') setSync('synced');
+  },function(){
+    s.busy=false; s.dirty=false;
+    setSync('error');
+  });
+}
+function mergeHist(extra,base){
+  var seen={},out=[];
+  extra.concat(base).forEach(function(e){if(e&&e.id&&!seen[e.id]){seen[e.id]=1;out.push(e);}});
+  return out.slice(0,60);
+}
+function onSnap(k){
+  return function(snap){
+    var confirmed=!snap.metadata.fromCache;
+    if(!(saver[k].busy||saver[k].dirty) && snap.exists){
+      var d=snap.data();
+      if(d && Array.isArray(d.items)) S[k]=clone(d.items);
+    }
+    if(k==='history' && pendingHist.length){
+      S.history=mergeHist(pendingHist,S.history);
+    }
+    LS.set(K[k],S[k]);
+    if(confirmed){
+      conf[k]=true;
+      if(k==='history' && pendingHist.length){pendingHist=[];saveDoc('history');}
+      if(conf.routines&&conf.history){
+        clearTimeout(loadTimer);
+        if(S.sync!=='error') setSync('synced');
+      }
+    }
+    if((k==='routines'&&S.view==='home')||(k==='history'&&S.view==='history')) render();
+  };
+}
+function onSnapErr(){
+  clearTimeout(loadTimer);
+  refs.routines=null; refs.history=null;
+  setSync('local');
+}
+function initRemote(){
+  if(!window.claude || typeof window.claude.use!=='function'){setSync('local');return;}
+  Promise.all([window.claude.use('db'),window.claude.use('user')]).then(function(r){
+    var db=r[0],user=r[1];
+    if(!db||!user){setSync('local');return;}
+    return user.id().then(function(uid){
+      if(!uid){setSync('local');return;}
+      var col=db.collection('data/users/'+uid);
+      refs.routines=col.doc('routines');
+      refs.history=col.doc('history');
+      loadTimer=setTimeout(function(){if(!(conf.routines&&conf.history)) setSync('stale');},10000);
+      refs.routines.onSnapshot(onSnap('routines'),onSnapErr);
+      refs.history.onSnapshot(onSnap('history'),onSnapErr);
+    });
+  }).catch(function(){setSync('local');});
+}
+
+/* ---------- sound, vibration, wake lock ---------- */
+var ac=null, wake=null;
+function initAudio(){
+  try{
+    if(!ac){var C=window.AudioContext||window.webkitAudioContext; if(C) ac=new C();}
+    if(ac && ac.state==='suspended') ac.resume();
+  }catch(e){}
+}
+function beep(freq,dur,delay,vol){
+  if(!S.sound||!ac) return;
+  try{
+    var t=ac.currentTime+(delay||0), o=ac.createOscillator(), g=ac.createGain();
+    o.type='triangle'; o.frequency.value=freq;
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(vol||0.5,t+0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.connect(g); g.connect(ac.destination);
+    o.start(t); o.stop(t+dur+0.02);
+  }catch(e){}
+}
+function buzz(p){try{if(navigator.vibrate) navigator.vibrate(p);}catch(e){}}
+function signalRestEnd(){beep(988,.2,0);beep(988,.2,.28);beep(1319,.45,.56);buzz([200,100,200,100,450]);}
+function signalDone(){beep(784,.18,0);beep(988,.18,.2);beep(1175,.18,.4);beep(1568,.5,.6);buzz([150,80,150,80,150,80,500]);}
+function acquireWake(){
+  try{
+    if(navigator.wakeLock && document.visibilityState==='visible'){
+      navigator.wakeLock.request('screen').then(function(w){wake=w;},function(){});
+    }
+  }catch(e){}
+}
+function releaseWake(){try{if(wake){wake.release();wake=null;}}catch(e){}}
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState==='visible' && S.view==='run'){acquireWake();tick();}
+});
+
+/* ---------- routine helpers ---------- */
+function estimateMin(rt){
+  var sec=0, ex=rt.exercises;
+  ex.forEach(function(e){sec+=e.sets*45+(e.sets-1)*e.rest;});
+  sec+=(ex.length-1)*(rt.transition||0);
+  return Math.max(1,Math.round(sec/60));
+}
+function blankEx(prev){return {id:newId(),name:'',sets:prev?prev.sets:'3',reps:prev?prev.reps:'10',weight:'',rest:prev?prev.rest:'90'};}
+function toDraft(rt){
+  return {id:rt.id,isNew:false,name:rt.name,transition:String(rt.transition),
+    exercises:rt.exercises.map(function(e){return {id:e.id,name:e.name,sets:String(e.sets),reps:String(e.reps),weight:e.weight?kg(e.weight):'',rest:String(e.rest)};})};
+}
+function sampleRoutine(){
+  return {id:newId(),name:'상체 예시',transition:120,exercises:[
+    {id:newId(),name:'벤치프레스',sets:4,reps:8,weight:60,rest:120},
+    {id:newId(),name:'랫풀다운',sets:4,reps:10,weight:45,rest:90},
+    {id:newId(),name:'숄더프레스',sets:3,reps:10,weight:30,rest:90},
+    {id:newId(),name:'푸시업',sets:3,reps:15,weight:null,rest:60}
+  ]};
+}
+
+/* ---------- views ---------- */
+function vHome(){
+  var h='<header class="top"><h1>루틴</h1><button class="link" data-act="history">운동 기록</button></header>';
+  if(S.run){
+    h+='<section class="resume"><p>진행 중인 운동이 있어요: '+esc(S.run.routine.name)+'</p><div class="pair">'+
+       '<button class="btn primary" data-act="resume">이어서 하기</button>'+
+       '<button class="btn line" data-act="discard">'+(S.confirm==='discard'?'한 번 더 누르면 버림':'버리기')+'</button></div></section>';
+  }
+  if(S.routines.length){
+    h+='<ul class="routines">'+S.routines.map(function(rt){
+      var sets=rt.exercises.reduce(function(a,e){return a+e.sets;},0);
+      return '<li><h2 class="rt-name">'+esc(rt.name)+'</h2>'+
+        '<p class="rt-meta">운동 '+rt.exercises.length+'개, '+sets+'세트, 약 '+estimateMin(rt)+'분</p>'+
+        '<div class="rt-actions"><button class="btn primary" data-act="start" data-id="'+esc(rt.id)+'">운동 시작</button>'+
+        '<button class="btn line" data-act="edit" data-id="'+esc(rt.id)+'">편집</button></div></li>';
+    }).join('')+'</ul>';
+    h+='<div class="stack"><button class="btn line wide" data-act="new">새 루틴 만들기</button></div>';
+  }else{
+    h+='<section class="empty"><h2>아직 루틴이 없어요</h2>'+
+       '<p>운동 순서, 세트와 횟수, 휴식 시간을 정해 두면 세트를 끝낼 때마다 휴식 타이머가 알아서 돌아가요.</p>'+
+       '<div class="stack"><button class="btn primary wide" data-act="new">새 루틴 만들기</button>'+
+       '<button class="btn line wide" data-act="sample">예시 루틴 불러오기</button></div></section>';
+  }
+  h+='<p class="sync" id="sync">'+esc(SYNC_TEXT[S.sync]||'')+'</p>';
+  return h;
+}
+
+function vEdit(){
+  var d=S.draft, n=d.exercises.length;
+  var h='<header class="top"><h1>'+(d.isNew?'새 루틴':'루틴 편집')+'</h1></header>';
+  h+='<label class="field"><span>루틴 이름</span><input type="text" data-f="name" maxlength="40" placeholder="예: 가슴과 삼두" value="'+esc(d.name)+'"></label>';
+  h+='<ol class="exs">'+d.exercises.map(function(e,i){
+    return '<li class="ex" data-i="'+i+'">'+
+      '<div class="ex-head"><span class="ord">'+(i+1)+'</span>'+
+      '<input type="text" data-f="name" maxlength="60" placeholder="운동 이름" aria-label="'+(i+1)+'번 운동 이름" value="'+esc(e.name)+'"></div>'+
+      '<div class="ex-grid">'+
+      '<label><span>세트</span><input type="text" inputmode="numeric" data-f="sets" value="'+esc(e.sets)+'"></label>'+
+      '<label><span>횟수</span><input type="text" inputmode="numeric" data-f="reps" value="'+esc(e.reps)+'"></label>'+
+      '<label><span>무게 kg</span><input type="text" inputmode="decimal" data-f="weight" placeholder="맨몸" value="'+esc(e.weight)+'"></label>'+
+      '<label><span>휴식 초</span><input type="text" inputmode="numeric" data-f="rest" value="'+esc(e.rest)+'"></label>'+
+      '</div>'+
+      '<div class="ex-tools">'+
+      '<button data-act="ex-up"'+(i===0?' disabled':'')+' aria-label="위로 옮기기">위로</button>'+
+      '<button data-act="ex-down"'+(i===n-1?' disabled':'')+' aria-label="아래로 옮기기">아래로</button>'+
+      '<button class="rm" data-act="ex-rm"'+(n===1?' disabled':'')+'>빼기</button>'+
+      '</div></li>';
+  }).join('')+'</ol>';
+  h+='<button class="btn line wide" data-act="ex-add">운동 추가</button>';
+  h+='<label class="field"><span>다음 운동으로 넘어갈 때 휴식 (초)</span><input type="text" inputmode="numeric" data-f="transition" value="'+esc(d.transition)+'"></label>';
+  if(!d.isNew){
+    h+='<div class="more"><button class="link" data-act="dup">이 루틴 복제</button>'+
+       '<button class="link" style="color:var(--red)" data-act="del">'+(S.confirm==='del'?'한 번 더 누르면 삭제':'이 루틴 삭제')+'</button></div>';
+  }
+  if(S.editError) h+='<p class="err" role="alert">'+esc(S.editError)+'</p>';
+  h+='<div class="savebar"><button class="btn line" data-act="cancel">취소</button><button class="btn primary" data-act="save">루틴 저장</button></div>';
+  return h;
+}
+
+function vRun(){
+  var R=S.run, exs=R.routine.exercises, ex=exs[R.ex];
+  var h='<header class="run-top"><button class="link" data-act="end">'+(S.confirm==='end'?'한 번 더 누르면 종료':'끝내기')+'</button>'+
+        '<span class="elapsed num" id="elapsed">'+fmt((Date.now()-R.startedAt)/1000)+'</span>'+
+        '<button class="link" data-act="sound" aria-pressed="'+S.sound+'">'+(S.sound?'소리 켜짐':'소리 꺼짐')+'</button></header>';
+  if(R.phase==='rest'){
+    var left=(R.restEnd-Date.now())/1000;
+    h+='<main class="rest"><p class="phase">휴식</p>'+
+       '<p class="timer num" id="timer">'+fmt(left)+'</p>'+
+       '<p class="next">다음<br><strong>'+esc(ex.name)+'</strong><br>'+(R.set+1)+' / '+ex.sets+' 세트, '+target(R.cur.reps,R.cur.weight)+'</p></main>'+
+       '<footer class="run-actions"><div class="pair">'+
+       '<button class="btn line" data-act="rest-sub">15초 줄이기</button>'+
+       '<button class="btn line" data-act="rest-add">15초 늘리기</button></div>'+
+       '<button class="btn solid huge" data-act="rest-skip">바로 시작</button></footer>';
+    return h;
+  }
+  var lastSet=R.set>=ex.sets-1, lastEx=R.ex>=exs.length-1, hint;
+  if(lastSet&&lastEx) hint='마지막 세트예요.';
+  else if(lastSet) hint='끝내면 '+(R.routine.transition>0?fmt(R.routine.transition)+' 쉬고 ':'바로 ')+esc(exs[R.ex+1].name)+'(으)로 넘어가요.';
+  else hint=ex.rest>0?'끝내면 '+fmt(ex.rest)+' 휴식이 시작돼요.':'끝내면 바로 다음 세트예요.';
+  var segs='';
+  for(var i=0;i<ex.sets;i++) segs+='<i class="'+(i<R.set?'done':i===R.set?'now':'')+'"></i>';
+  h+='<main class="work"><p class="pos">'+(R.ex+1)+'번째 운동, 전체 '+exs.length+'개</p>'+
+     '<h1 class="ex-title">'+esc(ex.name)+'</h1>'+
+     '<p class="setline"><span class="num big">'+(R.set+1)+'</span><span class="of">/ '+ex.sets+' 세트</span></p>'+
+     '<div class="segs" aria-hidden="true">'+segs+'</div><div class="steppers">';
+  if(R.cur.weight){
+    h+='<div class="stepper"><button data-act="w-dec" aria-label="무게 2.5kg 줄이기">−</button>'+
+       '<div><span class="num">'+kg(R.cur.weight)+'</span><small>kg</small></div>'+
+       '<button data-act="w-inc" aria-label="무게 2.5kg 늘리기">+</button></div>';
+  }
+  h+='<div class="stepper"><button data-act="r-dec" aria-label="횟수 줄이기">−</button>'+
+     '<div><span class="num">'+R.cur.reps+'</span><small>회</small></div>'+
+     '<button data-act="r-inc" aria-label="횟수 늘리기">+</button></div></div></main>';
+  h+='<footer class="run-actions"><p class="hint">'+hint+'</p>'+
+     '<button class="btn primary huge" data-act="done-set">세트 완료</button>'+
+     '<div class="pair"><button class="btn line" data-act="undo"'+(R.log.length?'':' disabled')+'>이전 세트로</button>'+
+     '<button class="btn line" data-act="skip-ex">이 운동 건너뛰기</button></div></footer>';
+  return h;
+}
+
+function logList(items){
+  return '<ul class="log">'+items.map(function(it){
+    return '<li><b>'+esc(it.name)+'</b><span>'+it.sets.map(function(s){return esc(target(s.reps,s.weight));}).join(', ')+'</span></li>';
+  }).join('')+'</ul>';
+}
+function facts(e){
+  return '<div class="facts"><div><b class="num">'+e.setCount+'</b><span>세트</span></div>'+
+    (e.volume?'<div><b class="num">'+Math.round(e.volume).toLocaleString('ko-KR')+'</b><span>총 볼륨 kg</span></div>':'')+'</div>';
+}
+function vDone(){
+  var e=S.lastDone;
+  return '<header class="top"><h1>운동 끝</h1></header>'+
+    '<p class="pos">'+esc(e.routineName)+'</p>'+
+    '<p class="done-time num">'+fmt(e.durationSec)+'</p>'+facts(e)+logList(e.items)+
+    '<div class="stack"><button class="btn primary wide" data-act="home">루틴 목록으로</button></div>';
+}
+function vHistory(){
+  var h='<header class="top"><h1>운동 기록</h1><button class="link" data-act="home">루틴 목록</button></header>';
+  if(!S.history.length) return h+'<section class="empty"><h2>아직 기록이 없어요</h2><p>루틴을 끝내면 날짜, 걸린 시간, 세트별 무게와 횟수가 여기에 남아요.</p></section>';
+  h+='<ul class="hist">'+S.history.map(function(e){
+    var d=new Date(e.endedAt);
+    var date=d.toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'short'});
+    return '<li><details><summary><span class="h-name">'+esc(e.routineName)+'</span><br>'+
+      '<span class="h-meta">'+esc(date)+', '+fmt(e.durationSec)+', '+e.setCount+'세트'+(e.volume?', '+Math.round(e.volume).toLocaleString('ko-KR')+'kg':'')+'</span></summary>'+
+      logList(e.items)+
+      '<button class="link" style="color:var(--red)" data-act="hist-del" data-id="'+esc(e.id)+'">'+(S.confirm==='hist:'+e.id?'한 번 더 누르면 삭제':'이 기록 삭제')+'</button>'+
+      '</details></li>';
+  }).join('')+'</ul>';
+  return h;
+}
+var VIEWS={home:vHome,edit:vEdit,run:vRun,done:vDone,history:vHistory};
+
+var lastView=null, confirmTimer=null;
+function render(){
+  if(S.view==='run'&&!S.run) S.view='home';
+  if(S.view==='edit'&&!S.draft) S.view='home';
+  if(S.view==='done'&&!S.lastDone) S.view='home';
+  var resting=S.view==='run'&&S.run.phase==='rest';
+  document.body.classList.toggle('is-rest',resting);
+  var open={};
+  if(S.view==='history') Array.prototype.forEach.call($app.querySelectorAll('details[open] [data-id]'),function(b){open[b.dataset.id]=1;});
+  $app.innerHTML=VIEWS[S.view]();
+  if(S.view==='history') Array.prototype.forEach.call($app.querySelectorAll('details'),function(d){var b=d.querySelector('[data-id]');if(b&&open[b.dataset.id]) d.open=true;});
+  if(S.view!==lastView){window.scrollTo(0,0);lastView=S.view;}
+  if(resting) tick();
+}
+function go(v){S.view=v;S.confirm=null;render();}
+function twoStep(key,fn){
+  if(S.confirm===key){S.confirm=null;clearTimeout(confirmTimer);fn();return;}
+  S.confirm=key;render();
+  clearTimeout(confirmTimer);
+  confirmTimer=setTimeout(function(){if(S.confirm===key){S.confirm=null;render();}},3500);
+}
+
+/* ---------- run logic ---------- */
+function persistRun(){if(S.run) LS.set(K.run,S.run); else LS.del(K.run);}
+function curFor(ex){return {reps:ex.reps,weight:ex.weight};}
+function startRun(rt){
+  var snap=clone(rt);
+  S.run={routine:snap,ex:0,set:0,phase:'work',restEnd:0,restTotal:0,startedAt:Date.now(),log:[],cur:curFor(snap.exercises[0])};
+  persistRun();acquireWake();go('run');
+}
+function completeSet(){
+  var R=S.run,exs=R.routine.exercises,ex=exs[R.ex];
+  R.log.push({ex:R.ex,set:R.set,reps:R.cur.reps,weight:R.cur.weight});
+  var lastSet=R.set>=ex.sets-1,lastEx=R.ex>=exs.length-1,rest;
+  if(lastSet&&lastEx){finishRun();return;}
+  if(lastSet){R.ex++;R.set=0;R.cur=curFor(exs[R.ex]);rest=R.routine.transition||0;}
+  else{R.set++;rest=ex.rest||0;}
+  if(rest>0){R.phase='rest';R.restTotal=rest;R.restEnd=Date.now()+rest*1000;lastTickSec=-1;}
+  else R.phase='work';
+  persistRun();S.confirm=null;render();
+}
+function undoSet(){
+  var R=S.run,e=R.log.pop(); if(!e) return;
+  R.ex=e.ex;R.set=e.set;R.cur={reps:e.reps,weight:e.weight};R.phase='work';
+  persistRun();render();
+}
+function skipExercise(){
+  var R=S.run,exs=R.routine.exercises;
+  if(R.ex>=exs.length-1){finishRun();return;}
+  R.ex++;R.set=0;R.cur=curFor(exs[R.ex]);R.phase='work';
+  persistRun();render();
+}
+function finishRun(){
+  var R=S.run; if(!R) return;
+  releaseWake();
+  if(!R.log.length){S.run=null;persistRun();go('home');return;}
+  var items=[],byEx={},volume=0;
+  R.log.forEach(function(l){
+    if(!byEx[l.ex]){byEx[l.ex]={name:R.routine.exercises[l.ex].name,sets:[]};items.push(byEx[l.ex]);}
+    byEx[l.ex].sets.push({reps:l.reps,weight:l.weight||null});
+    if(l.weight) volume+=l.weight*l.reps;
+  });
+  var now=Date.now();
+  var entry={id:newId(),routineName:R.routine.name,startedAt:R.startedAt,endedAt:now,
+    durationSec:Math.round((now-R.startedAt)/1000),setCount:R.log.length,volume:volume,items:items};
+  S.history=mergeHist([entry],S.history);
+  if(refs.history&&!conf.history){pendingHist.push(entry);LS.set(K.history,S.history);}
+  else saveDoc('history');
+  S.lastDone=entry;S.run=null;persistRun();
+  signalDone();go('done');
+}
+var lastTickSec=-1;
+function tick(){
+  var R=S.run;
+  if(!R||S.view!=='run') return;
+  var el=document.getElementById('elapsed');
+  if(el) el.textContent=fmt((Date.now()-R.startedAt)/1000);
+  if(R.phase!=='rest') return;
+  var left=(R.restEnd-Date.now())/1000;
+  if(left<=0){R.phase='work';persistRun();signalRestEnd();render();return;}
+  var t=document.getElementById('timer');
+  if(t) t.textContent=fmt(left);
+  $drain.style.transform='scaleY('+Math.min(1,left/R.restTotal)+')';
+  var c=Math.ceil(left);
+  if(c<=3&&c!==lastTickSec){lastTickSec=c;beep(660,.09,0,.35);}
+}
+setInterval(tick,250);
+
+/* ---------- edit logic ---------- */
+function toInt(v,lo,hi,def){var n=parseInt(v,10);return isNaN(n)?def:Math.min(hi,Math.max(lo,n));}
+function saveDraft(){
+  var d=S.draft;
+  var exs=d.exercises.filter(function(x){return x.name.trim();}).map(function(x){
+    var w=parseFloat(String(x.weight).replace(',','.'));
+    return {id:x.id,name:x.name.trim().slice(0,60),sets:toInt(x.sets,1,30,3),reps:toInt(x.reps,1,999,10),
+      weight:(isNaN(w)||w<=0)?null:Math.min(999,w),rest:toInt(x.rest,0,3600,90)};
+  });
+  if(!exs.length){S.editError='운동 이름을 하나 이상 적어야 저장할 수 있어요.';render();return;}
+  var rt={id:d.id,name:d.name.trim().slice(0,40)||'이름 없는 루틴',transition:toInt(d.transition,0,3600,120),exercises:exs};
+  var i=S.routines.findIndex(function(r){return r.id===rt.id;});
+  if(i>=0) S.routines[i]=rt; else S.routines.push(rt);
+  saveDoc('routines');
+  S.draft=null;S.editError='';go('home');
+}
+function exIndex(b){return +b.closest('[data-i]').dataset.i;}
+
+/* ---------- actions ---------- */
+var ACT={
+  'new':function(){S.draft={id:newId(),isNew:true,name:'',transition:'120',exercises:[blankEx()]};S.editError='';go('edit');},
+  sample:function(){S.routines.push(sampleRoutine());saveDoc('routines');render();},
+  edit:function(b){var rt=S.routines.find(function(r){return r.id===b.dataset.id;});if(rt){S.draft=toDraft(rt);S.editError='';go('edit');}},
+  start:function(b){
+    var rt=S.routines.find(function(r){return r.id===b.dataset.id;}); if(!rt) return;
+    if(S.run) twoStep('discard',function(){startRun(rt);}); else startRun(rt);
+  },
+  resume:function(){acquireWake();go('run');},
+  discard:function(){twoStep('discard',function(){S.run=null;persistRun();render();});},
+  history:function(){go('history');},
+  home:function(){go('home');},
+  cancel:function(){S.draft=null;S.editError='';go('home');},
+  save:saveDraft,
+  'ex-add':function(){var e=S.draft.exercises;e.push(blankEx(e[e.length-1]));render();
+    var ins=$app.querySelectorAll('.ex-head input');if(ins.length) ins[ins.length-1].focus();},
+  'ex-rm':function(b){S.draft.exercises.splice(exIndex(b),1);render();},
+  'ex-up':function(b){var i=exIndex(b),e=S.draft.exercises;if(i>0){e.splice(i-1,0,e.splice(i,1)[0]);render();}},
+  'ex-down':function(b){var i=exIndex(b),e=S.draft.exercises;if(i<e.length-1){e.splice(i+1,0,e.splice(i,1)[0]);render();}},
+  dup:function(){
+    var rt=S.routines.find(function(r){return r.id===S.draft.id;}); if(!rt) return;
+    var c=clone(rt);c.id=newId();c.name=(c.name+' 복사본').slice(0,40);
+    c.exercises.forEach(function(e){e.id=newId();});
+    S.routines.push(c);saveDoc('routines');S.draft=null;go('home');
+  },
+  del:function(){twoStep('del',function(){
+    var id=S.draft.id;S.routines=S.routines.filter(function(r){return r.id!==id;});
+    saveDoc('routines');S.draft=null;go('home');
+  });},
+  'hist-del':function(b){var id=b.dataset.id;twoStep('hist:'+id,function(){
+    S.history=S.history.filter(function(e){return e.id!==id;});saveDoc('history');render();
+  });},
+  'done-set':completeSet,
+  undo:undoSet,
+  'skip-ex':skipExercise,
+  end:function(){twoStep('end',finishRun);},
+  sound:function(){S.sound=!S.sound;LS.set(K.sound,S.sound);if(S.sound) beep(880,.12,0);render();},
+  'rest-skip':function(){S.run.phase='work';persistRun();render();},
+  'rest-add':function(){var R=S.run;R.restEnd+=15000;R.restTotal+=15;lastTickSec=-1;persistRun();tick();},
+  'rest-sub':function(){var R=S.run;R.restEnd=Math.max(Date.now(),R.restEnd-15000);persistRun();tick();},
+  'w-inc':function(){S.run.cur.weight=Math.min(999,S.run.cur.weight+2.5);persistRun();render();},
+  'w-dec':function(){S.run.cur.weight=Math.max(2.5,S.run.cur.weight-2.5);persistRun();render();},
+  'r-inc':function(){S.run.cur.reps=Math.min(999,S.run.cur.reps+1);persistRun();render();},
+  'r-dec':function(){S.run.cur.reps=Math.max(1,S.run.cur.reps-1);persistRun();render();}
+};
+document.addEventListener('click',function(e){
+  var b=e.target.closest('[data-act]');
+  if(!b||b.disabled) return;
+  initAudio();
+  var fn=ACT[b.dataset.act];
+  if(fn) fn(b);
+});
+document.addEventListener('input',function(e){
+  if(S.view!=='edit'||!S.draft) return;
+  var t=e.target,f=t.dataset.f; if(!f) return;
+  var li=t.closest('[data-i]');
+  if(li) S.draft.exercises[+li.dataset.i][f]=t.value; else S.draft[f]=t.value;
+});
+
+render();
+initRemote();
+})();
+</script>
+</body>
+</html>
