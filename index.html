@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>루틴 타이머</title>
+<title>Routine Timer</title>
 <meta name="theme-color" content="#EEF0F2" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#12161B" media="(prefers-color-scheme: dark)">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -237,9 +237,22 @@ body.is-rest .run-actions{background:transparent}
 .btn.huge{border-radius:20px}
 .stepper{border-radius:16px}
 .top{align-items:center;flex-wrap:wrap}
+.brand{display:flex;margin:6px 0 20px}
+.brand svg{display:block;width:min(100%,290px);height:auto}
+.brand h1{margin:0;line-height:0;font-size:0;flex:1;min-width:0}
+.hello{font-size:20px;font-weight:600}
+.pill{display:inline-flex;align-items:center;gap:7px}
+.pill svg{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.pill.rec{background:var(--tint);border-color:transparent;color:var(--tint-ink)}
+.pill.set{background:var(--amber-tint);border-color:transparent;color:var(--amber-ink)}
+:root{--tint-ink:#1A3FAE;--amber-tint:#FFEFB5;--amber-ink:#6B4E00}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){--tint-ink:#BCCEFF;--amber-tint:#3A3008;--amber-ink:#F5C84A}
+}
+:root[data-theme="dark"]{--tint-ink:#BCCEFF;--amber-tint:#3A3008;--amber-ink:#F5C84A}
 .toplinks{gap:8px}
 .top.home{display:block;margin-bottom:14px}
-.top.home .toplinks{margin-top:10px}
+.top.home .toplinks{margin-top:12px}
 .pill{min-height:44px;padding:0 16px;border-radius:22px;border:1px solid var(--line);background:var(--surface);font-size:15px;font-weight:600;color:var(--ink);white-space:nowrap}
 .pill:active{transform:translateY(1px)}
 .routines{display:grid;gap:10px}
@@ -766,9 +779,10 @@ function vSettings(){
 }
 
 /* ---------- views ---------- */
+var BRAND='<div class="brand"><h1><svg viewBox="-2 -16 6392 738" role="img" aria-label="Routine Timer"><path fill="currentColor" d="M188.0 415.5V299H337Q384 299 409.5 275.2Q435.0 251.5 435.0 210.5Q435 172 409.7 147.0Q384.5 122.0 337.5 122.0H188V0H356Q426 0 479.0 26.7Q532.0 53.5 561.7 100.2Q591.5 147.0 591.5 208.0Q591.5 270.5 561.5 317.0Q531.5 363.5 477.5 389.5Q423.5 415.5 351.0 415.5ZM67.5 706.0V0.0H225V706ZM451.5 706.0 232 402 375.5 363.0 637.5 706.0ZM1459.5 717.0Q1393.1 717.0 1341.5 689.5Q1290 662 1260.7 613.3Q1231.5 564.6 1231.5 501.6V220.0H1384.5V500.0Q1384.5 525.0 1393.4 543.1Q1402.3 561.3 1419.4 571.1Q1436.4 581.0 1459.6 581.0Q1494 581 1514.0 559.4Q1534.0 537.9 1534 500V220H1687V501.5Q1687.0 565.5 1658.0 614.0Q1629.0 662.5 1577.7 689.7Q1526.5 717.0 1459.5 717.0ZM1846 706V19H1999V706ZM1736 350V220H2109V350ZM2170 706V220H2323V706ZM2246.5 153.0Q2211 153 2187.5 128.7Q2164.0 104.5 2164 69Q2164.0 33.5 2187.5 9.2Q2211 -15 2246.5 -15.0Q2283 -15 2306.0 9.2Q2329.0 33.5 2329 69Q2329.0 104.5 2306.0 128.7Q2283 153 2246.5 153.0ZM2746 706V429.5Q2746 391 2722.5 367.7Q2699.0 344.5 2662.6 344.5Q2637.8 344.5 2618.6 355.0Q2599.5 365.5 2588.7 384.7Q2578 404 2578.0 429.5L2518.5 400.5Q2518.5 343.0 2543.7 300.2Q2569.0 257.5 2613.4 233.7Q2657.8 210.0 2714.1 210.0Q2767.5 210.0 2809.2 235.5Q2851 261 2875.0 303.0Q2899 345 2899 395V706ZM2425 706V220H2578V706ZM3230.5 717.0Q3151.5 717.0 3090.2 684.5Q3029 652 2994.0 594.2Q2959.0 536.5 2959 463Q2959 390 2993.2 332.7Q3027.5 275.5 3086.7 242.2Q3146 209 3219.5 209.0Q3291.5 209.0 3346.7 240.2Q3402.0 271.5 3433.5 326.5Q3465.0 381.5 3465 452Q3465.0 465.5 3463.5 480.0Q3462.0 494.5 3458 513L3039.0 514.5V409.5L3393 408L3327.0 452.5Q3326.0 410.5 3313.7 382.7Q3301.5 355.0 3278.2 340.5Q3255 326 3220.5 326.0Q3184.5 326.0 3158.0 342.5Q3131.5 359.0 3117.2 389.2Q3103.0 419.5 3103 462Q3103 505 3118.2 535.7Q3133.5 566.5 3162.0 582.7Q3190.5 599.0 3230 599Q3266 599 3295.0 586.7Q3324.0 574.5 3346.0 549.5L3430.0 633.5Q3394 675 3343.0 696.0Q3292 717 3230.5 717.0ZM3887.5 706.0V10.0H4045V706ZM3667.0 137.5V0H4266V137.5ZM4334 706V220H4487V706ZM4410.5 153.0Q4375 153 4351.5 128.7Q4328.0 104.5 4328 69Q4328.0 33.5 4351.5 9.2Q4375 -15 4410.5 -15.0Q4447 -15 4470.0 9.2Q4493.0 33.5 4493 69Q4493.0 104.5 4470.0 128.7Q4447 153 4410.5 153.0ZM4589 706V220H4742V706ZM4900 706V422Q4900.0 385.5 4877.5 365.0Q4855.0 344.5 4821.5 344.5Q4798.5 344.5 4780.5 353.7Q4762.5 363.0 4752.2 380.2Q4742.0 397.5 4742 422L4682.5 396.0Q4682.5 338.5 4707.7 297.0Q4733.0 255.5 4776.0 232.7Q4819 210 4873 210Q4923.5 210.0 4964.2 233.0Q5005 256 5029.0 297.2Q5053.0 338.5 5053.0 395.5V706ZM5211 706V422Q5211.0 385.5 5188.5 365.0Q5166.0 344.5 5132.5 344.5Q5110.0 344.5 5091.7 353.7Q5073.5 363.0 5063.2 380.2Q5053.0 397.5 5053 422L4964.5 410.5Q4967.0 348.5 4994.2 303.7Q5021.5 259.0 5067.2 234.5Q5113 210 5170 210Q5225.5 210.0 5269.2 233.5Q5313 257 5338.5 300.5Q5364 344 5364 405V706ZM5695.5 717.0Q5616.5 717.0 5555.2 684.5Q5494 652 5459.0 594.2Q5424.0 536.5 5424 463Q5424 390 5458.2 332.7Q5492.5 275.5 5551.7 242.2Q5611 209 5684.5 209.0Q5756.5 209.0 5811.7 240.2Q5867.0 271.5 5898.5 326.5Q5930.0 381.5 5930 452Q5930.0 465.5 5928.5 480.0Q5927.0 494.5 5923 513L5504.0 514.5V409.5L5858 408L5792.0 452.5Q5791.0 410.5 5778.7 382.7Q5766.5 355.0 5743.2 340.5Q5720 326 5685.5 326.0Q5649.5 326.0 5623.0 342.5Q5596.5 359.0 5582.2 389.2Q5568.0 419.5 5568 462Q5568 505 5583.2 535.7Q5598.5 566.5 5627.0 582.7Q5655.5 599.0 5695 599Q5731 599 5760.0 586.7Q5789.0 574.5 5811.0 549.5L5895.0 633.5Q5859 675 5808.0 696.0Q5757 717 5695.5 717.0ZM5998 706V220H6151V706ZM6151.0 439.5 6086.5 389.5Q6105.5 304.0 6150.9 257.0Q6196.4 210.0 6275.5 210.0Q6310.5 210.0 6337.2 220.5Q6364 231 6384 253L6293 368Q6283 357 6268.1 351.2Q6253.3 345.5 6234.0 345.5Q6196.0 345.5 6173.5 368.8Q6151.0 392.2 6151.0 439.5Z"/><path fill="none" stroke="var(--blue)" stroke-width="132.9" d="M1107.1 463.0A199.3 199.3 0 1 1 907.8 263.7"/><path fill="none" stroke="#F5B800" stroke-width="132.9" d="M907.8 263.7A199.3 199.3 0 0 1 1107.1 463.0"/></svg></h1></div>';
 function vHome(){
-  var h='<header class="top home"><h1>'+(S.nick?esc(S.nick)+'님의 루틴':'루틴')+'</h1><div class="toplinks"><button class="pill" data-act="history">운동 기록</button>'+
-    '<button class="pill" data-act="settings">설정</button></div></header>';
+  var h=BRAND+'<header class="top home">'+(S.nick?'<p class="hello">'+esc(S.nick)+'님, 안녕하세요</p>':'')+'<div class="toplinks"><button class="pill rec" data-act="history"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>운동 기록</button>'+
+    '<button class="pill set" data-act="settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h5M14 6h6M4 12h9M18 12h2M4 18h3M12 18h8"/><circle cx="11.5" cy="6" r="2.5"/><circle cx="15.5" cy="12" r="2.5"/><circle cx="9.5" cy="18" r="2.5"/></svg>설정</button></div></header>';
   h+=installBanner();
   if(STANDALONE&&S.drive==='need'){
     h+='<section class="resume"><p>Google 드라이브 연결이 만료됐어요</p><button class="btn primary wide" data-act="drive-sync">다시 연결</button></section>';
@@ -1198,7 +1212,7 @@ var ACT={
     try{
       var f=new File([b.data],b.name,{type:'text/plain'});
       if(navigator.canShare&&navigator.canShare({files:[f]})){
-        navigator.share({files:[f],title:'루틴 타이머 백업'}).then(function(){
+        navigator.share({files:[f],title:'Routine Timer 백업'}).then(function(){
           LS.set('rt.lastBackup',Date.now());backupNote('백업 파일을 내보냈어요.');
         },function(){});
         return;
@@ -1210,7 +1224,7 @@ var ACT={
   'install-later':function(){LS.set('rt.installLater',true);render();},
   share:function(){
     var url=location.origin+location.pathname;
-    if(navigator.share){navigator.share({title:'루틴 타이머',text:'운동 루틴과 휴식 타이머',url:url}).catch(function(){});return;}
+    if(navigator.share){navigator.share({title:'Routine Timer',text:'운동 루틴과 휴식 타이머',url:url}).catch(function(){});return;}
     if(navigator.clipboard){
       navigator.clipboard.writeText(url).then(function(){S.shareMsg='주소를 복사했어요.';render();},function(){S.shareMsg=url;render();});
     }else{S.shareMsg=url;render();}
