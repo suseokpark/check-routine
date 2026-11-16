@@ -215,6 +215,47 @@ body.is-rest .run-actions{background:transparent}
 .hist .log{margin-bottom:8px}
 
 @media (prefers-reduced-motion: reduce){#drain{transition:none}.btn:active{transform:none}}
+
+/* ---------- theme v2: original blue palette, rounder shapes ---------- */
+:root{
+  --bg:#EEF0F2; --surface:#FFFFFF; --ink:#14181D; --steel:#56616D; --line:#C9D0D7;
+  --blue:#1F4FD8; --on-blue:#FFFFFF; --tint:#E1E9FC; --red:#C8321F; --green:#1E8A4C;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#12161B; --surface:#1B2128; --ink:#E9EDF1; --steel:#97A3B0; --line:#2E3740;
+    --blue:#6C97FF; --on-blue:#0B1220; --tint:#1A2544; --red:#FF7A66; --green:#4CC585;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12161B; --surface:#1B2128; --ink:#E9EDF1; --steel:#97A3B0; --line:#2E3740;
+  --blue:#6C97FF; --on-blue:#0B1220; --tint:#1A2544; --red:#FF7A66; --green:#4CC585;
+}
+:focus-visible{outline-color:var(--blue)}
+.filebtn:focus-within{outline-color:var(--blue)}
+.btn{border-radius:14px}
+.btn.huge{border-radius:20px}
+.stepper{border-radius:16px}
+.top{align-items:center;flex-wrap:wrap}
+.toplinks{gap:8px}
+.top.home{display:block;margin-bottom:14px}
+.top.home .toplinks{margin-top:10px}
+.pill{min-height:44px;padding:0 16px;border-radius:22px;border:1px solid var(--line);background:var(--surface);font-size:15px;font-weight:600;color:var(--ink);white-space:nowrap}
+.pill:active{transform:translateY(1px)}
+.routines{display:grid;gap:10px}
+.routines>li,.routines>li:first-child{background:var(--surface);border:0;border-radius:18px;padding:18px}
+.resume{background:var(--tint);border:0;border-radius:18px;padding:16px}
+.resume .btn.line{border-color:var(--steel)}
+.week{background:var(--surface);border-radius:18px;padding:4px 16px}
+.week>li:first-child{border-top:0}
+.week>li:last-child{border-bottom:0}
+.week .today b{justify-self:start;padding:1px 8px;border-radius:8px;background:var(--blue);color:var(--on-blue)}
+.cal .today{color:var(--ink);box-shadow:inset 0 0 0 2.5px var(--blue)}
+.cal .today.done{box-shadow:none}
+.cal .sel{outline-color:var(--blue)}
+.prev-sets b{color:var(--on-blue);background:var(--blue);padding:1px 6px;border-radius:6px}
+.pick-row.on span{color:var(--ink)}
+.pick-row em:not(:empty){color:var(--on-blue);background:var(--blue);padding:3px 10px;border-radius:12px}
 </style>
 </head>
 <body>
@@ -683,7 +724,7 @@ function installBanner(){
   return '';
 }
 function vSettings(){
-  var h='<header class="top"><h1>설정</h1><button class="link" data-act="home">루틴 목록</button></header>';
+  var h='<header class="top"><h1>설정</h1><button class="pill" data-act="home">루틴 목록</button></header>';
   h+='<h2 class="sec now">닉네임</h2>'+
      '<label class="field" style="margin-top:0"><span>첫 화면과 운동 완료 화면에 표시돼요. 12자까지 쓸 수 있고, 적는 대로 저장돼요.</span>'+
      '<input type="text" id="nick" maxlength="12" autocomplete="nickname" placeholder="예: 헬린이" value="'+esc(S.nick)+'"></label>';
@@ -701,7 +742,7 @@ function vSettings(){
     }
     if(S.drive==='error') h+='<p class="err" role="alert">'+esc(driveText())+'</p>';
     if(S.drive==='syncing') h+='<p class="rt-meta">'+esc(driveText())+'</p>';
-    h+='<button class="btn primary wide" data-act="drive-connect">Google 드라이브 연결</button>';
+    h+='<button class="btn line wide" data-act="drive-connect">Google 드라이브 연결</button>';
     if(!DRIVE_CLIENT_ID){
       h+='<details class="help"><summary>클라이언트 ID 만드는 법</summary><ol>'+
         '<li>console.cloud.google.com에서 프로젝트를 만들고 Google Drive API를 사용 설정해요.</li>'+
@@ -726,8 +767,8 @@ function vSettings(){
 
 /* ---------- views ---------- */
 function vHome(){
-  var h='<header class="top"><h1>'+(S.nick?esc(S.nick)+'님의 루틴':'루틴')+'</h1><div class="toplinks"><button class="link" data-act="history">운동 기록</button>'+
-    '<button class="link" data-act="settings">설정</button></div></header>';
+  var h='<header class="top home"><h1>'+(S.nick?esc(S.nick)+'님의 루틴':'루틴')+'</h1><div class="toplinks"><button class="pill" data-act="history">운동 기록</button>'+
+    '<button class="pill" data-act="settings">설정</button></div></header>';
   h+=installBanner();
   if(STANDALONE&&S.drive==='need'){
     h+='<section class="resume"><p>Google 드라이브 연결이 만료됐어요</p><button class="btn primary wide" data-act="drive-sync">다시 연결</button></section>';
@@ -918,7 +959,7 @@ function vHistory(){
   var upcoming=function(n){return new Date(c.y,c.m,n,23,59,59)>=now;};
   var planned=function(n){var w=new Date(c.y,c.m,n).getDay();return S.routines.filter(function(r){return arr(r.days).indexOf(w)>=0;});};
   var anyPlan=S.routines.some(function(r){return arr(r.days).length;});
-  var h='<header class="top"><h1>운동 기록</h1><button class="link" data-act="home">루틴 목록</button></header>';
+  var h='<header class="top"><h1>운동 기록</h1><button class="pill" data-act="home">루틴 목록</button></header>';
   h+='<div class="cal-nav"><button class="link" data-act="cal-prev">이전 달</button><h2>'+c.y+'년 '+(c.m+1)+'월</h2><button class="link" data-act="cal-next">다음 달</button></div>';
   h+='<p class="rt-meta" style="margin:0">'+(monthList.length?'운동 '+monthList.length+'회, 총 '+durText(sec):'이 달에는 기록이 없어요.')+'</p>';
   h+='<div class="cal-head" aria-hidden="true">'+WEEK.map(function(d){return '<span>'+DAYS[d]+'</span>';}).join('')+'</div><div class="cal">';
