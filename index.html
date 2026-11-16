@@ -3,7 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Routine Timer</title>
+<title>Check Routine</title>
+<meta name="description" content="운동 루틴·휴식 타이머">
+<meta property="og:title" content="Check Routine">
+<meta property="og:description" content="운동 루틴·휴식 타이머">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://suseokpark.github.io/check-routine/icon-512.png">
 <meta name="theme-color" content="#EEF0F2" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#12161B" media="(prefers-color-scheme: dark)">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -237,8 +242,9 @@ body.is-rest .run-actions{background:transparent}
 .btn.huge{border-radius:20px}
 .stepper{border-radius:16px}
 .top{align-items:center;flex-wrap:wrap}
-.brand{display:flex;margin:6px 0 20px}
-.brand svg{display:block;width:min(100%,290px);height:auto}
+.brand{margin:6px 0 20px}
+.brand p{margin-top:8px;font-size:15px;color:var(--steel)}
+.brand svg{display:block;width:min(100%,295px);height:auto}
 .brand h1{margin:0;line-height:0;font-size:0;flex:1;min-width:0}
 .hello{font-size:20px;font-weight:600}
 .pill{display:inline-flex;align-items:center;gap:7px}
@@ -478,7 +484,7 @@ function sampleRoutine(){
 /* ---------- Google Drive sync (standalone build only) ---------- */
 var STANDALONE=!window.claude&&!/claude/i.test(location.hostname);
 var DRIVE_CLIENT_ID='';   // 여기에 OAuth 클라이언트 ID를 넣으면 설정 화면에서 입력하지 않아도 됨
-var DRIVE_FILE='routine-timer-data.json';
+var DRIVE_FILE='check-routine-data.json';
 var DRIVE_SCOPE='https://www.googleapis.com/auth/drive.file';
 var G=LS.get('rt.drive')||{};
 if(typeof G!=='object') G={};
@@ -655,7 +661,7 @@ function cleanEntry(e){
 }
 function backupData(){
   var d=new Date();
-  return {name:'routine-timer-backup-'+d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate())+'.txt',
+  return {name:'check-routine-backup-'+d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate())+'.txt',
     data:JSON.stringify({app:'routine-timer',version:1,exportedAt:Date.now(),nickname:S.nick,routines:S.routines,history:S.history})};
 }
 function backupNote(msg,isErr){S.backupMsg=msg;S.backupErr=!!isErr;if(S.view==='settings') render();}
@@ -718,7 +724,7 @@ function installBanner(){
   var later='<button class="btn line" data-act="install-later">나중에</button>';
   var laterWide='<button class="btn line wide" data-act="install-later">닫기</button>';
   if(installEvt){
-    return '<section class="resume"><p>앱으로 설치하면 홈 화면에서 바로 열 수 있어요</p><div class="pair">'+
+    return '<section class="resume"><p>Check Routine은 운동 루틴·휴식 타이머예요. 앱으로 설치하면 홈 화면에서 바로 열 수 있어요.</p><div class="pair">'+
       '<button class="btn primary" data-act="install">앱 설치</button>'+later+'</div></section>';
   }
   if(inapp&&android){
@@ -779,7 +785,7 @@ function vSettings(){
 }
 
 /* ---------- views ---------- */
-var BRAND='<div class="brand"><h1><svg viewBox="-2 -16 6392 738" role="img" aria-label="Routine Timer"><path fill="currentColor" d="M188.0 415.5V299H337Q384 299 409.5 275.2Q435.0 251.5 435.0 210.5Q435 172 409.7 147.0Q384.5 122.0 337.5 122.0H188V0H356Q426 0 479.0 26.7Q532.0 53.5 561.7 100.2Q591.5 147.0 591.5 208.0Q591.5 270.5 561.5 317.0Q531.5 363.5 477.5 389.5Q423.5 415.5 351.0 415.5ZM67.5 706.0V0.0H225V706ZM451.5 706.0 232 402 375.5 363.0 637.5 706.0ZM1459.5 717.0Q1393.1 717.0 1341.5 689.5Q1290 662 1260.7 613.3Q1231.5 564.6 1231.5 501.6V220.0H1384.5V500.0Q1384.5 525.0 1393.4 543.1Q1402.3 561.3 1419.4 571.1Q1436.4 581.0 1459.6 581.0Q1494 581 1514.0 559.4Q1534.0 537.9 1534 500V220H1687V501.5Q1687.0 565.5 1658.0 614.0Q1629.0 662.5 1577.7 689.7Q1526.5 717.0 1459.5 717.0ZM1846 706V19H1999V706ZM1736 350V220H2109V350ZM2170 706V220H2323V706ZM2246.5 153.0Q2211 153 2187.5 128.7Q2164.0 104.5 2164 69Q2164.0 33.5 2187.5 9.2Q2211 -15 2246.5 -15.0Q2283 -15 2306.0 9.2Q2329.0 33.5 2329 69Q2329.0 104.5 2306.0 128.7Q2283 153 2246.5 153.0ZM2746 706V429.5Q2746 391 2722.5 367.7Q2699.0 344.5 2662.6 344.5Q2637.8 344.5 2618.6 355.0Q2599.5 365.5 2588.7 384.7Q2578 404 2578.0 429.5L2518.5 400.5Q2518.5 343.0 2543.7 300.2Q2569.0 257.5 2613.4 233.7Q2657.8 210.0 2714.1 210.0Q2767.5 210.0 2809.2 235.5Q2851 261 2875.0 303.0Q2899 345 2899 395V706ZM2425 706V220H2578V706ZM3230.5 717.0Q3151.5 717.0 3090.2 684.5Q3029 652 2994.0 594.2Q2959.0 536.5 2959 463Q2959 390 2993.2 332.7Q3027.5 275.5 3086.7 242.2Q3146 209 3219.5 209.0Q3291.5 209.0 3346.7 240.2Q3402.0 271.5 3433.5 326.5Q3465.0 381.5 3465 452Q3465.0 465.5 3463.5 480.0Q3462.0 494.5 3458 513L3039.0 514.5V409.5L3393 408L3327.0 452.5Q3326.0 410.5 3313.7 382.7Q3301.5 355.0 3278.2 340.5Q3255 326 3220.5 326.0Q3184.5 326.0 3158.0 342.5Q3131.5 359.0 3117.2 389.2Q3103.0 419.5 3103 462Q3103 505 3118.2 535.7Q3133.5 566.5 3162.0 582.7Q3190.5 599.0 3230 599Q3266 599 3295.0 586.7Q3324.0 574.5 3346.0 549.5L3430.0 633.5Q3394 675 3343.0 696.0Q3292 717 3230.5 717.0ZM3887.5 706.0V10.0H4045V706ZM3667.0 137.5V0H4266V137.5ZM4334 706V220H4487V706ZM4410.5 153.0Q4375 153 4351.5 128.7Q4328.0 104.5 4328 69Q4328.0 33.5 4351.5 9.2Q4375 -15 4410.5 -15.0Q4447 -15 4470.0 9.2Q4493.0 33.5 4493 69Q4493.0 104.5 4470.0 128.7Q4447 153 4410.5 153.0ZM4589 706V220H4742V706ZM4900 706V422Q4900.0 385.5 4877.5 365.0Q4855.0 344.5 4821.5 344.5Q4798.5 344.5 4780.5 353.7Q4762.5 363.0 4752.2 380.2Q4742.0 397.5 4742 422L4682.5 396.0Q4682.5 338.5 4707.7 297.0Q4733.0 255.5 4776.0 232.7Q4819 210 4873 210Q4923.5 210.0 4964.2 233.0Q5005 256 5029.0 297.2Q5053.0 338.5 5053.0 395.5V706ZM5211 706V422Q5211.0 385.5 5188.5 365.0Q5166.0 344.5 5132.5 344.5Q5110.0 344.5 5091.7 353.7Q5073.5 363.0 5063.2 380.2Q5053.0 397.5 5053 422L4964.5 410.5Q4967.0 348.5 4994.2 303.7Q5021.5 259.0 5067.2 234.5Q5113 210 5170 210Q5225.5 210.0 5269.2 233.5Q5313 257 5338.5 300.5Q5364 344 5364 405V706ZM5695.5 717.0Q5616.5 717.0 5555.2 684.5Q5494 652 5459.0 594.2Q5424.0 536.5 5424 463Q5424 390 5458.2 332.7Q5492.5 275.5 5551.7 242.2Q5611 209 5684.5 209.0Q5756.5 209.0 5811.7 240.2Q5867.0 271.5 5898.5 326.5Q5930.0 381.5 5930 452Q5930.0 465.5 5928.5 480.0Q5927.0 494.5 5923 513L5504.0 514.5V409.5L5858 408L5792.0 452.5Q5791.0 410.5 5778.7 382.7Q5766.5 355.0 5743.2 340.5Q5720 326 5685.5 326.0Q5649.5 326.0 5623.0 342.5Q5596.5 359.0 5582.2 389.2Q5568.0 419.5 5568 462Q5568 505 5583.2 535.7Q5598.5 566.5 5627.0 582.7Q5655.5 599.0 5695 599Q5731 599 5760.0 586.7Q5789.0 574.5 5811.0 549.5L5895.0 633.5Q5859 675 5808.0 696.0Q5757 717 5695.5 717.0ZM5998 706V220H6151V706ZM6151.0 439.5 6086.5 389.5Q6105.5 304.0 6150.9 257.0Q6196.4 210.0 6275.5 210.0Q6310.5 210.0 6337.2 220.5Q6364 231 6384 253L6293 368Q6283 357 6268.1 351.2Q6253.3 345.5 6234.0 345.5Q6196.0 345.5 6173.5 368.8Q6151.0 392.2 6151.0 439.5Z"/><path fill="none" stroke="var(--blue)" stroke-width="132.9" d="M1107.1 463.0A199.3 199.3 0 1 1 907.8 263.7"/><path fill="none" stroke="#F5B800" stroke-width="132.9" d="M907.8 263.7A199.3 199.3 0 0 1 1107.1 463.0"/></svg></h1></div>';
+var BRAND='<div class="brand"><h1><svg viewBox="-2 -16 6494 738" role="img" aria-label="Check Routine"><path fill="currentColor" d="M402.5 717.0Q323.5 717.0 256.0 689.5Q188.5 662.0 138.0 612.2Q87.5 562.5 59.7 496.0Q32.0 429.5 32.0 352.5Q32 275 59.7 208.7Q87.5 142.5 137.7 93.5Q188.0 44.5 255.2 16.7Q322.5 -11.0 401.5 -11.0Q485.5 -11.0 551.0 16.0Q616.5 43.0 666 90L560.5 196.0Q533 166 493.5 149.0Q454 132 401.5 132.0Q355.5 132.0 317.2 147.5Q279 163 251.2 192.2Q223.5 221.5 208.2 262.2Q193 303 193.0 352.5Q193.0 402.5 208.2 443.2Q223.5 484.0 251.2 513.2Q279.0 542.5 317.2 558.2Q355.5 574.0 401.5 574.0Q456 574 496.0 557.2Q536.0 540.5 564.5 510.0L670.5 616.0Q620.0 663.5 554.5 690.2Q489 717 402.5 717.0ZM1058 706V429.5Q1058 391 1034.5 367.7Q1011.0 344.5 974.6 344.5Q949.8 344.5 930.6 355.0Q911.5 365.5 900.7 384.7Q890 404 890.0 429.5L830.5 400.5Q830.5 343.0 854.7 300.2Q879.0 257.5 921.9 233.7Q964.8 210.0 1020.6 210.0Q1077.5 210.0 1120.5 233.7Q1163.5 257.5 1187.2 299.0Q1211.0 340.5 1211 395V706ZM737 706V-20H890V706ZM1542.5 717.0Q1463.5 717.0 1402.2 684.5Q1341 652 1306.0 594.2Q1271.0 536.5 1271 463Q1271 390 1305.2 332.7Q1339.5 275.5 1398.7 242.2Q1458 209 1531.5 209.0Q1603.5 209.0 1658.7 240.2Q1714.0 271.5 1745.5 326.5Q1777.0 381.5 1777 452Q1777.0 465.5 1775.5 480.0Q1774.0 494.5 1770 513L1351.0 514.5V409.5L1705 408L1639.0 452.5Q1638.0 410.5 1625.7 382.7Q1613.5 355.0 1590.2 340.5Q1567 326 1532.5 326.0Q1496.5 326.0 1470.0 342.5Q1443.5 359.0 1429.2 389.2Q1415.0 419.5 1415 462Q1415 505 1430.2 535.7Q1445.5 566.5 1474.0 582.7Q1502.5 599.0 1542 599Q1578 599 1607.0 586.7Q1636.0 574.5 1658.0 549.5L1742.0 633.5Q1706 675 1655.0 696.0Q1604 717 1542.5 717.0ZM2080 717Q2004.5 717.0 1943.7 684.0Q1883 651 1848.0 593.2Q1813.0 535.5 1813.0 463.5Q1813.0 390.5 1848.2 333.0Q1883.5 275.5 1944.5 242.2Q2005.5 209.0 2081.5 209.0Q2138.5 209.0 2186.0 228.7Q2233.5 248.5 2270.5 287.0L2173 385Q2156.0 366.5 2133.2 357.2Q2110.5 348.0 2081.5 348.0Q2049 348 2023.5 362.5Q1998 377 1983.2 402.5Q1968.5 428.0 1968.5 462.5Q1968.5 496.5 1983.2 522.5Q1998.0 548.5 2023.7 563.2Q2049.5 578.0 2081.5 578.0Q2112 578 2135.2 567.7Q2158.5 557.5 2175.5 538.0L2273 636Q2234.5 676.0 2186.7 696.5Q2139 717 2080 717ZM2646 706 2476 454 2645 220H2816L2612.0 483.5L2617 420L2826 706ZM2335 706V-20H2488V706ZM3193.0 415.5V299H3342Q3389 299 3414.5 275.2Q3440.0 251.5 3440.0 210.5Q3440 172 3414.7 147.0Q3389.5 122.0 3342.5 122.0H3193V0H3361Q3431 0 3484.0 26.7Q3537.0 53.5 3566.7 100.2Q3596.5 147.0 3596.5 208.0Q3596.5 270.5 3566.5 317.0Q3536.5 363.5 3482.5 389.5Q3428.5 415.5 3356.0 415.5ZM3072.5 706.0V0.0H3230V706ZM3456.5 706.0 3237 402 3380.5 363.0 3642.5 706.0ZM4464.5 717.0Q4398.1 717.0 4346.5 689.5Q4295 662 4265.7 613.3Q4236.5 564.6 4236.5 501.6V220.0H4389.5V500.0Q4389.5 525.0 4398.4 543.1Q4407.3 561.3 4424.4 571.1Q4441.4 581.0 4464.6 581.0Q4499 581 4519.0 559.4Q4539.0 537.9 4539 500V220H4692V501.5Q4692.0 565.5 4663.0 614.0Q4634.0 662.5 4582.7 689.7Q4531.5 717.0 4464.5 717.0ZM4851 706V19H5004V706ZM4741 350V220H5114V350ZM5175 706V220H5328V706ZM5251.5 153.0Q5216 153 5192.5 128.7Q5169.0 104.5 5169 69Q5169.0 33.5 5192.5 9.2Q5216 -15 5251.5 -15.0Q5288 -15 5311.0 9.2Q5334.0 33.5 5334 69Q5334.0 104.5 5311.0 128.7Q5288 153 5251.5 153.0ZM5751 706V429.5Q5751 391 5727.5 367.7Q5704.0 344.5 5667.6 344.5Q5642.8 344.5 5623.6 355.0Q5604.5 365.5 5593.7 384.7Q5583 404 5583.0 429.5L5523.5 400.5Q5523.5 343.0 5548.7 300.2Q5574.0 257.5 5618.4 233.7Q5662.8 210.0 5719.1 210.0Q5772.5 210.0 5814.2 235.5Q5856 261 5880.0 303.0Q5904 345 5904 395V706ZM5430 706V220H5583V706ZM6235.5 717.0Q6156.5 717.0 6095.2 684.5Q6034 652 5999.0 594.2Q5964.0 536.5 5964 463Q5964 390 5998.2 332.7Q6032.5 275.5 6091.7 242.2Q6151 209 6224.5 209.0Q6296.5 209.0 6351.7 240.2Q6407.0 271.5 6438.5 326.5Q6470.0 381.5 6470 452Q6470.0 465.5 6468.5 480.0Q6467.0 494.5 6463 513L6044.0 514.5V409.5L6398 408L6332.0 452.5Q6331.0 410.5 6318.7 382.7Q6306.5 355.0 6283.2 340.5Q6260 326 6225.5 326.0Q6189.5 326.0 6163.0 342.5Q6136.5 359.0 6122.2 389.2Q6108.0 419.5 6108 462Q6108 505 6123.2 535.7Q6138.5 566.5 6167.0 582.7Q6195.5 599.0 6235 599Q6271 599 6300.0 586.7Q6329.0 574.5 6351.0 549.5L6435.0 633.5Q6399 675 6348.0 696.0Q6297 717 6235.5 717.0Z"/><path fill="none" stroke="var(--blue)" stroke-width="132.9" d="M4112.1 463.0A199.3 199.3 0 1 1 3912.8 263.7"/><path fill="none" stroke="#F5B800" stroke-width="132.9" d="M3912.8 263.7A199.3 199.3 0 0 1 4112.1 463.0"/></svg></h1><p>운동 루틴·휴식 타이머</p></div>';
 function vHome(){
   var h=BRAND+'<header class="top home">'+(S.nick?'<p class="hello">'+esc(S.nick)+'님, 안녕하세요</p>':'')+'<div class="toplinks"><button class="pill rec" data-act="history"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>운동 기록</button>'+
     '<button class="pill set" data-act="settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h5M14 6h6M4 12h9M18 12h2M4 18h3M12 18h8"/><circle cx="11.5" cy="6" r="2.5"/><circle cx="15.5" cy="12" r="2.5"/><circle cx="9.5" cy="18" r="2.5"/></svg>설정</button></div></header>';
@@ -1212,7 +1218,7 @@ var ACT={
     try{
       var f=new File([b.data],b.name,{type:'text/plain'});
       if(navigator.canShare&&navigator.canShare({files:[f]})){
-        navigator.share({files:[f],title:'Routine Timer 백업'}).then(function(){
+        navigator.share({files:[f],title:'Check Routine 백업'}).then(function(){
           LS.set('rt.lastBackup',Date.now());backupNote('백업 파일을 내보냈어요.');
         },function(){});
         return;
@@ -1224,7 +1230,7 @@ var ACT={
   'install-later':function(){LS.set('rt.installLater',true);render();},
   share:function(){
     var url=location.origin+location.pathname;
-    if(navigator.share){navigator.share({title:'Routine Timer',text:'운동 루틴과 휴식 타이머',url:url}).catch(function(){});return;}
+    if(navigator.share){navigator.share({title:'Check Routine',text:'운동 루틴·휴식 타이머',url:url}).catch(function(){});return;}
     if(navigator.clipboard){
       navigator.clipboard.writeText(url).then(function(){S.shareMsg='주소를 복사했어요.';render();},function(){S.shareMsg=url;render();});
     }else{S.shareMsg=url;render();}

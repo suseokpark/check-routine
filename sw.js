@@ -1,5 +1,5 @@
-// 루틴 타이머 서비스 워커: 온라인이면 항상 최신 파일, 오프라인이면 저장해 둔 파일로 열림
-const CACHE = 'routine-timer-v2';
+// Check Routine 서비스 워커: 온라인이면 항상 최신 파일, 오프라인이면 저장해 둔 파일로 열림
+const CACHE = 'check-routine-v3';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (e) => {

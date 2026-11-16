@@ -1,7 +1,7 @@
 {
-  "name": "Routine Timer",
-  "short_name": "Routine Timer",
-  "description": "세트·횟수 기반 운동 루틴과 휴식 타이머",
+  "name": "Check Routine",
+  "short_name": "Check Routine",
+  "description": "운동 루틴·휴식 타이머",
   "lang": "ko",
   "start_url": "./",
   "scope": "./",
