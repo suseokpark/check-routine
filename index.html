@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>루틴 타이머</title>
+<meta name="theme-color" content="#EEF0F2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#12161B" media="(prefers-color-scheme: dark)">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -99,6 +101,14 @@ input::placeholder{color:var(--steel);opacity:.7}
 .savebar{position:sticky;bottom:0;display:grid;grid-template-columns:1fr 2fr;gap:10px;background:var(--bg);padding:12px 0 calc(12px + env(safe-area-inset-bottom,0px));margin-top:20px;border-top:1px solid var(--line)}
 .savebar .btn{min-height:56px;font-size:18px}
 .more{display:flex;gap:20px;flex-wrap:wrap;margin-top:8px}
+
+/* settings */
+.toplinks{display:flex;gap:18px}
+.help{color:var(--steel);font-size:15px;margin-top:14px}
+.help summary{cursor:pointer;font-weight:600;padding:8px 0}
+.help ol{list-style:decimal;padding-left:20px}
+.help li{margin:8px 0}
+.help code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;overflow-wrap:anywhere;color:var(--ink)}
 
 /* calendar + previous record */
 .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-top:4px}
@@ -260,7 +270,7 @@ var loadTimer = null;
 function setSync(v){
   S.sync=v;
   var el=document.getElementById('sync');
-  if(el) el.textContent=SYNC_TEXT[v]||'';
+  if(el&&!STANDALONE) el.textContent=SYNC_TEXT[v]||'';
 }
 function writeOnce(ref,data){
   return ref.set(data).catch(function(e){
@@ -272,6 +282,8 @@ function writeOnce(ref,data){
 }
 function saveDoc(k){
   LS.set(K[k],S[k]);
+  if(k==='routines'){G.dataAt=Date.now();saveG();}
+  driveQueue();
   var ref=refs[k]; if(!ref) return;
   var s=saver[k];
   if(s.busy){s.dirty=true;return;}
@@ -402,9 +414,186 @@ function sampleRoutine(){
   ]};
 }
 
+/* ---------- Google Drive sync (standalone build only) ---------- */
+var STANDALONE=!window.claude&&!/claude/i.test(location.hostname);
+var DRIVE_CLIENT_ID='';   // 여기에 OAuth 클라이언트 ID를 넣으면 설정 화면에서 입력하지 않아도 됨
+var DRIVE_FILE='routine-timer-data.json';
+var DRIVE_SCOPE='https://www.googleapis.com/auth/drive.file';
+var G=LS.get('rt.drive')||{};
+if(typeof G!=='object') G={};
+function saveG(){LS.set('rt.drive',G);}
+S.drive=G.on?'idle':'off';
+S.driveErr='';
+var driveBusy=false,driveAgain=false,driveTimer=null,installEvt=null;
+
+function driveText(){
+  if(S.drive==='syncing') return 'Google 드라이브와 맞추는 중…';
+  if(S.drive==='need') return 'Google 드라이브 연결이 만료됐어요. 다시 연결하면 이어서 저장돼요.';
+  if(S.drive==='error'&&!G.on) return '연결하지 못했어요: '+S.driveErr;
+  if(S.drive==='error') return '드라이브 동기화에 실패했어요 ('+S.driveErr+'). 이 기기에는 저장돼 있어요.';
+  if(G.on) return 'Google 드라이브에 저장됨'+(G.lastSync?', 마지막 동기화 '+new Date(G.lastSync).toLocaleTimeString('ko-KR',{hour:'numeric',minute:'2-digit'}):'');
+  return '이 기기의 브라우저에만 저장돼요. 설정에서 Google 드라이브에 연결할 수 있어요.';
+}
+function setDrive(v){
+  S.drive=v;
+  if(S.view==='home'||S.view==='settings') render();
+}
+function gisLoad(){
+  return new Promise(function(res,rej){
+    if(window.google&&google.accounts&&google.accounts.oauth2){res();return;}
+    var s=document.createElement('script');
+    s.src='https://accounts.google.com/gsi/client';
+    s.onload=function(){res();};
+    s.onerror=function(){rej(new Error('Google 로그인 스크립트를 불러오지 못함'));};
+    document.head.appendChild(s);
+  });
+}
+function driveToken(interactive){
+  if(G.token&&G.exp>Date.now()+60000) return Promise.resolve(G.token);
+  if(!interactive) return Promise.reject({need:true});
+  var cid=(G.clientId||DRIVE_CLIENT_ID||'').trim();
+  return gisLoad().then(function(){
+    return new Promise(function(res,rej){
+      var tc=google.accounts.oauth2.initTokenClient({
+        client_id:cid,scope:DRIVE_SCOPE,
+        callback:function(r){
+          if(r&&r.access_token){G.token=r.access_token;G.exp=Date.now()+(+r.expires_in||3600)*1000;saveG();res(G.token);}
+          else rej(new Error((r&&r.error)||'로그인 취소됨'));
+        },
+        error_callback:function(e){rej(new Error((e&&e.type)||'로그인 창이 닫힘'));}
+      });
+      tc.requestAccessToken({prompt:G.on?'':'consent'});
+    });
+  });
+}
+function dfetch(url,opt){
+  opt=opt||{};
+  var hd={Authorization:'Bearer '+G.token},k;
+  for(k in (opt.headers||{})) hd[k]=opt.headers[k];
+  opt.headers=hd;
+  return fetch(url,opt).then(function(r){
+    if(r.status===401){G.token=null;G.exp=0;saveG();throw {need:true};}
+    if(!r.ok){var er=new Error('드라이브 응답 '+r.status);er.status=r.status;throw er;}
+    return r;
+  });
+}
+function driveFind(){
+  if(G.fileId) return Promise.resolve(G.fileId);
+  var q=encodeURIComponent("name='"+DRIVE_FILE+"' and trashed=false");
+  return dfetch('https://www.googleapis.com/drive/v3/files?q='+q+'&spaces=drive&fields=files(id)&orderBy=modifiedTime%20desc')
+    .then(function(r){return r.json();})
+    .then(function(j){var f=j.files&&j.files[0];G.fileId=f?f.id:null;saveG();return G.fileId;});
+}
+function driveRead(id){
+  return dfetch('https://www.googleapis.com/drive/v3/files/'+id+'?alt=media').then(function(r){return r.json();});
+}
+function driveWrite(id,data){
+  var body=JSON.stringify(data);
+  if(id) return dfetch('https://www.googleapis.com/upload/drive/v3/files/'+id+'?uploadType=media',{method:'PATCH',headers:{'Content-Type':'application/json'},body:body});
+  var b='rt'+Date.now();
+  var multi='--'+b+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify({name:DRIVE_FILE,mimeType:'application/json'})+
+    '\r\n--'+b+'\r\nContent-Type: application/json\r\n\r\n'+body+'\r\n--'+b+'--';
+  return dfetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{method:'POST',headers:{'Content-Type':'multipart/related; boundary='+b},body:multi})
+    .then(function(r){return r.json();})
+    .then(function(j){G.fileId=j.id;saveG();});
+}
+function driveSync(interactive){
+  if(!STANDALONE) return;
+  if(!G.on&&!interactive) return;
+  if(driveBusy){driveAgain=true;return;}
+  driveBusy=true;S.driveErr='';setDrive('syncing');
+  driveToken(interactive).then(driveFind).then(function(id){
+    if(!id) return null;
+    return driveRead(id).catch(function(e){
+      if(e&&e.status===404){G.fileId=null;return null;}
+      throw e;
+    });
+  }).then(function(remote){
+    var changed=false,same=false;
+    if(remote&&typeof remote==='object'){
+      var del={};
+      arr(remote.histDel).concat(arr(G.histDel)).forEach(function(id){del[id]=1;});
+      G.histDel=Object.keys(del).slice(-300);
+      var merged=mergeHist(S.history,arr(remote.history)).filter(function(e){return !del[e.id];})
+        .sort(function(a,b){return b.endedAt-a.endedAt;});
+      if(JSON.stringify(merged)!==JSON.stringify(S.history)){S.history=merged;LS.set(K.history,S.history);changed=true;}
+      if(Array.isArray(remote.routines)){
+        if(!G.dataAt&&S.routines.length){
+          var ids={};
+          remote.routines.forEach(function(r){ids[r.id]=1;});
+          var add=S.routines.filter(function(r){return !ids[r.id];});
+          S.routines=remote.routines.concat(add);
+          G.dataAt=add.length?Date.now():(remote.updatedAt||Date.now());
+          LS.set(K.routines,S.routines);changed=true;
+        }else if((remote.updatedAt||0)>(G.dataAt||0)){
+          S.routines=remote.routines;G.dataAt=remote.updatedAt;
+          LS.set(K.routines,S.routines);changed=true;
+        }
+      }
+      same=remote.updatedAt===G.dataAt&&JSON.stringify(arr(remote.history))===JSON.stringify(S.history)&&
+        JSON.stringify(arr(remote.histDel))===JSON.stringify(arr(G.histDel));
+    }
+    if(!G.dataAt) G.dataAt=Date.now();
+    saveG();
+    if(same) return changed;
+    return driveWrite(G.fileId,{app:'routine-timer',version:1,updatedAt:G.dataAt,routines:S.routines,history:S.history,histDel:arr(G.histDel)})
+      .then(function(){return changed;});
+  }).then(function(){
+    G.on=true;G.lastSync=Date.now();saveG();
+    driveBusy=false;S.drive='idle';
+    if(S.view==='home'||S.view==='history'||S.view==='settings') render();
+    if(driveAgain){driveAgain=false;driveSync(false);}
+  }).catch(function(e){
+    driveBusy=false;driveAgain=false;
+    if(e&&e.need){setDrive(G.on?'need':'off');return;}
+    S.driveErr=String((e&&e.message)||e);
+    setDrive('error');
+  });
+}
+function driveQueue(){
+  if(!STANDALONE||!G.on) return;
+  clearTimeout(driveTimer);
+  driveTimer=setTimeout(function(){driveSync(false);},1500);
+}
+function vSettings(){
+  var h='<header class="top"><h1>설정</h1><button class="link" data-act="home">루틴 목록</button></header>';
+  h+='<h2 class="sec now">Google 드라이브 연동</h2>';
+  h+='<p class="rt-meta" style="margin-bottom:8px">루틴과 운동 기록을 내 드라이브의 '+DRIVE_FILE+' 파일에 저장해요. 다른 기기에서도 같은 계정으로 연결하면 이어서 쓸 수 있어요.</p>';
+  if(G.on){
+    h+='<p class="'+(S.drive==='error'||S.drive==='need'?'err':'ok')+'">'+esc(driveText())+'</p>';
+    h+='<div class="pair2" style="margin-top:12px"><button class="btn primary" data-act="drive-sync">'+(S.drive==='need'?'다시 연결':'지금 동기화')+'</button>'+
+       '<button class="btn line" data-act="drive-off">'+(S.confirm==='drive-off'?'한 번 더 누르면 끊김':'연결 끊기')+'</button></div>';
+  }else{
+    if(!DRIVE_CLIENT_ID){
+      h+='<label class="field"><span>OAuth 클라이언트 ID</span><input type="text" id="drive-cid" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="….apps.googleusercontent.com" value="'+esc(G.clientId||'')+'"></label>';
+    }
+    if(S.drive==='error') h+='<p class="err" role="alert">'+esc(driveText())+'</p>';
+    if(S.drive==='syncing') h+='<p class="rt-meta">'+esc(driveText())+'</p>';
+    h+='<button class="btn primary wide" data-act="drive-connect">Google 드라이브 연결</button>';
+    if(!DRIVE_CLIENT_ID){
+      h+='<details class="help"><summary>클라이언트 ID 만드는 법</summary><ol>'+
+        '<li>console.cloud.google.com에서 프로젝트를 만들고 Google Drive API를 사용 설정해요.</li>'+
+        '<li>OAuth 동의 화면을 외부 유형으로 만들고, 테스트 사용자에 본인 Google 계정을 추가해요.</li>'+
+        '<li>사용자 인증 정보에서 OAuth 클라이언트 ID를 웹 애플리케이션 유형으로 만들고, 승인된 JavaScript 원본에 <code>'+esc(location.origin)+'</code>을 넣어요.</li>'+
+        '<li>발급된 클라이언트 ID를 위 칸에 붙여 넣고 연결을 눌러요.</li></ol></details>';
+    }
+  }
+  h+='<h2 class="sec">앱으로 설치</h2>';
+  var installed=false;
+  try{installed=window.matchMedia('(display-mode: standalone)').matches;}catch(e){}
+  if(installed) h+='<p class="restday">이미 앱으로 설치해서 쓰고 있어요.</p>';
+  else if(installEvt) h+='<button class="btn solid wide" data-act="install">홈 화면에 앱 설치</button>';
+  else h+='<p class="restday">Chrome 메뉴에서 “홈 화면에 추가” 또는 “앱 설치”를 누르면 주소창 없이 앱처럼 열려요.</p>';
+  return h;
+}
+
 /* ---------- views ---------- */
 function vHome(){
-  var h='<header class="top"><h1>루틴</h1><button class="link" data-act="history">운동 기록</button></header>';
+  var h='<header class="top"><h1>루틴</h1><div class="toplinks"><button class="link" data-act="history">운동 기록</button>'+
+    (STANDALONE?'<button class="link" data-act="settings">설정</button>':'')+'</div></header>';
+  if(STANDALONE&&S.drive==='need'){
+    h+='<section class="resume"><p>Google 드라이브 연결이 만료됐어요</p><button class="btn primary wide" data-act="drive-sync">다시 연결</button></section>';
+  }
   if(S.run){
     h+='<section class="resume"><p>진행 중인 운동이 있어요: '+esc(S.run.routine.name)+'</p><div class="pair">'+
        '<button class="btn primary" data-act="resume">이어서 하기</button>'+
@@ -445,7 +634,7 @@ function vHome(){
        '<div class="stack"><button class="btn primary wide" data-act="new">새 루틴 만들기</button>'+
        '<button class="btn line wide" data-act="sample">예시 루틴 불러오기</button></div></section>';
   }
-  h+='<p class="sync" id="sync">'+esc(SYNC_TEXT[S.sync]||'')+'</p>';
+  h+='<p class="sync" id="sync">'+esc(STANDALONE?driveText():(SYNC_TEXT[S.sync]||''))+'</p>';
   return h;
 }
 
@@ -671,7 +860,7 @@ function vPick(){
     '<ul class="pick-list" id="pick-list">'+pickListHtml()+'</ul>'+
     '<div class="savebar one"><button class="btn primary" data-act="pick-done">'+pickDoneLabel()+'</button></div>';
 }
-var VIEWS={home:vHome,edit:vEdit,pick:vPick,run:vRun,done:vDone,history:vHistory};
+var VIEWS={home:vHome,edit:vEdit,pick:vPick,run:vRun,done:vDone,history:vHistory,settings:vSettings};
 
 var lastView=null, confirmTimer=null;
 function render(){
@@ -813,6 +1002,24 @@ var ACT={
     if(s){R.cur={reps:s.reps,weight:s.weight||R.cur.weight};persistRun();render();}
   },
   home:function(){go('home');},
+  settings:function(){if(STANDALONE){gisLoad().catch(function(){});go('settings');}},
+  'drive-connect':function(){
+    var cid=(G.clientId||DRIVE_CLIENT_ID||'').trim();
+    if(!/\.apps\.googleusercontent\.com$/.test(cid)){
+      S.driveErr='클라이언트 ID는 .apps.googleusercontent.com으로 끝나야 해요';S.drive='error';render();return;
+    }
+    driveSync(true);
+  },
+  'drive-sync':function(){driveSync(true);},
+  'drive-off':function(){twoStep('drive-off',function(){
+    G.on=false;G.token=null;G.exp=0;G.fileId=null;saveG();S.drive='off';S.driveErr='';render();
+  });},
+  install:function(){
+    if(!installEvt) return;
+    var ev=installEvt;installEvt=null;
+    try{ev.prompt();}catch(e){}
+    render();
+  },
   cancel:function(){S.draft=null;S.editError='';go('home');},
   save:saveDraft,
   'ex-add':function(){var e=S.draft.exercises;e.push(blankEx(e[e.length-1]));render();
@@ -831,7 +1038,9 @@ var ACT={
     saveDoc('routines');S.draft=null;go('home');
   });},
   'hist-del':function(b){var id=b.dataset.id;twoStep('hist:'+id,function(){
-    S.history=S.history.filter(function(e){return e.id!==id;});saveDoc('history');render();
+    S.history=S.history.filter(function(e){return e.id!==id;});
+    if(STANDALONE){G.histDel=arr(G.histDel).concat([id]).slice(-300);saveG();}
+    saveDoc('history');render();
   });},
   'done-set':completeSet,
   undo:undoSet,
@@ -855,6 +1064,7 @@ document.addEventListener('click',function(e){
 });
 document.addEventListener('input',function(e){
   var t=e.target;
+  if(S.view==='settings'&&t.id==='drive-cid'){G.clientId=t.value.trim();saveG();return;}
   if(S.view==='pick'&&S.draft&&t.id==='pick-q'){
     S.pick.q=t.value;
     document.getElementById('pick-list').innerHTML=pickListHtml();
@@ -870,6 +1080,21 @@ document.addEventListener('input',function(e){
 
 render();
 initRemote();
+
+/* ---------- installable app shell + first Drive sync (standalone build only) ---------- */
+if(STANDALONE){
+  try{
+    var ml=document.createElement('link');ml.rel='manifest';ml.href='manifest.webmanifest';document.head.appendChild(ml);
+    var il=document.createElement('link');il.rel='apple-touch-icon';il.href='icon-192.png';document.head.appendChild(il);
+    if('serviceWorker' in navigator&&location.protocol==='https:') navigator.serviceWorker.register('sw.js').catch(function(){});
+  }catch(e){}
+  window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();installEvt=e;if(S.view==='settings') render();});
+  window.addEventListener('appinstalled',function(){installEvt=null;if(S.view==='settings') render();});
+  document.addEventListener('visibilitychange',function(){
+    if(document.visibilityState==='visible'&&G.on&&Date.now()-(G.lastSync||0)>300000) driveSync(false);
+  });
+  if(G.on) driveSync(false);
+}
 })();
 </script>
 </body>
