@@ -65,7 +65,9 @@ button{cursor:pointer;touch-action:manipulation}
 
 /* home */
 .top{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px}
-.top h1{font-size:30px;font-weight:700;letter-spacing:-.01em}
+.top h1{font-size:30px;font-weight:700;letter-spacing:-.01em;line-height:1.25;min-width:0;overflow-wrap:anywhere}
+.top{gap:12px}
+.toplinks{flex:none}
 .resume{border:1.5px solid var(--blue);border-radius:12px;padding:14px 16px;margin:8px 0 12px}
 .resume p{font-weight:600;margin-bottom:10px}
 .resume .pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -109,6 +111,9 @@ input::placeholder{color:var(--steel);opacity:.7}
 .help ol{list-style:decimal;padding-left:20px}
 .help li{margin:8px 0}
 .help code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;overflow-wrap:anywhere;color:var(--ink)}
+
+.filebtn{display:flex;align-items:center;justify-content:center;cursor:pointer}
+.filebtn:focus-within{outline:3px solid var(--blue);outline-offset:2px}
 
 /* calendar + previous record */
 .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-top:4px}
@@ -247,7 +252,8 @@ var S = {
   sound:LS.get(K.sound)!==false,
   sync:'connecting',
   cal:{y:new Date().getFullYear(),m:new Date().getMonth(),sel:null},
-  lastPrev:null
+  lastPrev:null,
+  nick:String(LS.get('rt.nick')||'').slice(0,12)
 };
 if(S.run && (!S.run.routine || !arr(S.run.routine.exercises).length)){S.run=null;LS.del(K.run);}
 if(S.run && S.run.phase==='rest' && S.run.restEnd<=Date.now()){S.run.phase='work';}
@@ -304,6 +310,7 @@ function saveDoc(k){
 function mergeHist(extra,base){
   var seen={},out=[];
   extra.concat(base).forEach(function(e){if(e&&e.id&&!seen[e.id]){seen[e.id]=1;out.push(e);}});
+  out.sort(function(a,b){return (b.endedAt||0)-(a.endedAt||0);});
   return out.slice(0,200);
 }
 function onSnap(k){
@@ -432,7 +439,7 @@ function driveText(){
   if(S.drive==='error'&&!G.on) return '연결하지 못했어요: '+S.driveErr;
   if(S.drive==='error') return '드라이브 동기화에 실패했어요 ('+S.driveErr+'). 이 기기에는 저장돼 있어요.';
   if(G.on) return 'Google 드라이브에 저장됨'+(G.lastSync?', 마지막 동기화 '+new Date(G.lastSync).toLocaleTimeString('ko-KR',{hour:'numeric',minute:'2-digit'}):'');
-  return '이 기기의 브라우저에만 저장돼요. 설정에서 Google 드라이브에 연결할 수 있어요.';
+  return '이 기기의 브라우저에만 저장돼요. 설정에서 백업 파일을 만들어 둘 수 있어요.';
 }
 function setDrive(v){
   S.drive=v;
@@ -555,6 +562,98 @@ function driveQueue(){
   clearTimeout(driveTimer);
   driveTimer=setTimeout(function(){driveSync(false);},1500);
 }
+/* ---------- backup file: export / import ---------- */
+function pad2(n){return (n<10?'0':'')+n;}
+function num(v,lo,hi,def){v=Number(v);return isFinite(v)?Math.min(hi,Math.max(lo,v)):def;}
+function cleanRoutine(r){
+  if(!r||typeof r!=='object') return null;
+  var exs=arr(r.exercises).map(function(e){
+    if(!e||typeof e!=='object'||!String(e.name||'').trim()) return null;
+    var w=num(e.weight,0,999,0);
+    return {id:String(e.id||newId()).slice(0,40),name:String(e.name).trim().slice(0,60),
+      sets:Math.round(num(e.sets,1,30,3)),reps:Math.round(num(e.reps,1,999,10)),weight:w>0?w:null,rest:Math.round(num(e.rest,0,3600,90))};
+  }).filter(Boolean);
+  if(!exs.length) return null;
+  return {id:String(r.id||newId()).slice(0,40),name:String(r.name||'이름 없는 루틴').slice(0,40),
+    days:arr(r.days).map(Number).filter(function(d){return d>=0&&d<=6&&d%1===0;}),
+    transition:Math.round(num(r.transition,0,3600,120)),exercises:exs};
+}
+function cleanEntry(e){
+  if(!e||typeof e!=='object') return null;
+  var cnt=0,vol=0;
+  var items=arr(e.items).map(function(it){
+    if(!it||typeof it!=='object') return null;
+    var sets=arr(it.sets).map(function(s){
+      if(!s||typeof s!=='object') return null;
+      var w=num(s.weight,0,999,0),reps=Math.round(num(s.reps,1,999,1));
+      cnt++;if(w>0) vol+=w*reps;
+      return {reps:reps,weight:w>0?w:null};
+    }).filter(Boolean);
+    return sets.length?{name:String(it.name||'').slice(0,60),sets:sets}:null;
+  }).filter(Boolean);
+  var end=num(e.endedAt,0,4e12,0);
+  if(!items.length||!end) return null;
+  var out={id:String(e.id||newId()).slice(0,40),routineName:String(e.routineName||'').slice(0,40),
+    startedAt:num(e.startedAt,0,4e12,end),endedAt:end,durationSec:Math.round(num(e.durationSec,0,172800,0)),
+    setCount:cnt,volume:vol,items:items};
+  if(e.routineId) out.routineId=String(e.routineId).slice(0,40);
+  return out;
+}
+function backupData(){
+  var d=new Date();
+  return {name:'routine-timer-backup-'+d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate())+'.txt',
+    data:JSON.stringify({app:'routine-timer',version:1,exportedAt:Date.now(),nickname:S.nick,routines:S.routines,history:S.history})};
+}
+function backupNote(msg,isErr){S.backupMsg=msg;S.backupErr=!!isErr;if(S.view==='settings') render();}
+function backupDownload(b){
+  try{
+    var url=URL.createObjectURL(new Blob([b.data],{type:'text/plain'}));
+    var a=document.createElement('a');
+    a.href=url;a.download=b.name;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(function(){URL.revokeObjectURL(url);},3000);
+    LS.set('rt.lastBackup',Date.now());
+    backupNote('저장을 시작했어요. 다운로드 폴더에서 '+b.name+' 파일을 확인해 주세요.');
+  }catch(e){backupNote('파일을 만들지 못했어요.',true);}
+}
+function canShareFile(){
+  try{return !!(navigator.canShare&&navigator.canShare({files:[new File(['{}'],'a.txt',{type:'text/plain'})]}));}catch(e){return false;}
+}
+function importBackup(text){
+  var d;
+  try{d=JSON.parse(text);}catch(e){d=null;}
+  if(!d||typeof d!=='object'||(!Array.isArray(d.routines)&&!Array.isArray(d.history))){
+    backupNote('백업 파일을 읽지 못했어요. 이 앱에서 내보낸 파일이 맞는지 확인해 주세요.',true);return;
+  }
+  var rs=arr(d.routines).map(cleanRoutine).filter(Boolean),hs=arr(d.history).map(cleanEntry).filter(Boolean);
+  if(!rs.length&&!hs.length){backupNote('가져올 루틴이나 기록이 없는 파일이에요.',true);return;}
+  var byId={};
+  rs.forEach(function(r){byId[r.id]=r;});
+  var have={};
+  S.routines=S.routines.map(function(r){have[r.id]=1;return byId[r.id]||r;}).concat(rs.filter(function(r){return !have[r.id];}));
+  var before=S.history.length,got={};
+  hs.forEach(function(e){got[e.id]=1;});
+  S.history=mergeHist(S.history,hs).sort(function(a,b){return b.endedAt-a.endedAt;});
+  G.histDel=arr(G.histDel).filter(function(id){return !got[id];});
+  if(!S.nick&&typeof d.nickname==='string'&&d.nickname.trim()){S.nick=d.nickname.trim().slice(0,12);LS.set('rt.nick',S.nick);}
+  saveDoc('routines');saveDoc('history');
+  backupNote('루틴 '+rs.length+'개를 가져오고 새 운동 기록 '+(S.history.length-before)+'개를 더했어요.');
+}
+function backupHtml(){
+  var h='<h2 class="sec now">백업과 복원</h2>'+
+    '<p class="rt-meta" style="margin-bottom:10px">루틴과 운동 기록을 파일 하나로 내보내요. 구글 드라이브, 내 파일, 카카오톡 등 원하는 곳에 보관했다가 새 폰이나 다른 기기에서 가져오면 돼요.</p>'+
+    '<div class="stack" style="margin-top:0">';
+  if(canShareFile()){
+    h+='<button class="btn primary wide" data-act="backup-share">백업 내보내기</button>'+
+       '<button class="btn line wide" data-act="backup-save">이 기기에 파일로 저장</button>';
+  }else{
+    h+='<button class="btn primary wide" data-act="backup-save">백업 파일 저장</button>';
+  }
+  h+='<label class="btn line wide filebtn">백업 파일 가져오기<input type="file" id="backup-file" accept=".txt,.json,text/plain,application/json" hidden></label></div>';
+  if(S.backupMsg) h+='<p class="'+(S.backupErr?'err':'ok')+'" role="status" style="margin-top:10px">'+esc(S.backupMsg)+'</p>';
+  var last=LS.get('rt.lastBackup');
+  if(last){var ld=new Date(last);h+='<p class="sync" style="margin-top:8px">마지막 백업 '+(ld.getMonth()+1)+'월 '+ld.getDate()+'일</p>';}
+  return h;
+}
 function isInstalled(){
   try{return window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;}catch(e){return false;}
 }
@@ -585,7 +684,12 @@ function installBanner(){
 }
 function vSettings(){
   var h='<header class="top"><h1>설정</h1><button class="link" data-act="home">루틴 목록</button></header>';
-  h+='<h2 class="sec now">Google 드라이브 연동</h2>';
+  h+='<h2 class="sec now">닉네임</h2>'+
+     '<label class="field" style="margin-top:0"><span>첫 화면과 운동 완료 화면에 표시돼요. 12자까지 쓸 수 있고, 적는 대로 저장돼요.</span>'+
+     '<input type="text" id="nick" maxlength="12" autocomplete="nickname" placeholder="예: 헬린이" value="'+esc(S.nick)+'"></label>';
+  if(!STANDALONE) return h;
+  var top=h;
+  h='<h2 class="sec">Google 드라이브 자동 동기화 (고급)</h2>';
   h+='<p class="rt-meta" style="margin-bottom:8px">루틴과 운동 기록을 내 드라이브의 '+DRIVE_FILE+' 파일에 저장해요. 다른 기기에서도 같은 계정으로 연결하면 이어서 쓸 수 있어요.</p>';
   if(G.on){
     h+='<p class="'+(S.drive==='error'||S.drive==='need'?'err':'ok')+'">'+esc(driveText())+'</p>';
@@ -606,7 +710,8 @@ function vSettings(){
         '<li>발급된 클라이언트 ID를 위 칸에 붙여 넣고 연결을 눌러요.</li></ol></details>';
     }
   }
-  h+='<h2 class="sec">앱으로 설치</h2>';
+  var driveHtml=h;
+  h=top+backupHtml()+'<h2 class="sec">앱으로 설치</h2>';
   var installed=false;
   try{installed=window.matchMedia('(display-mode: standalone)').matches;}catch(e){}
   if(installed) h+='<p class="restday">이미 앱으로 설치해서 쓰고 있어요.</p>';
@@ -615,13 +720,14 @@ function vSettings(){
   h+='<h2 class="sec">다른 사람에게 알려주기</h2>';
   h+='<button class="btn line wide" data-act="share">앱 주소 공유하기</button>';
   if(S.shareMsg) h+='<p class="ok" style="margin-top:8px">'+esc(S.shareMsg)+'</p>';
+  h+=driveHtml;
   return h;
 }
 
 /* ---------- views ---------- */
 function vHome(){
-  var h='<header class="top"><h1>루틴</h1><div class="toplinks"><button class="link" data-act="history">운동 기록</button>'+
-    (STANDALONE?'<button class="link" data-act="settings">설정</button>':'')+'</div></header>';
+  var h='<header class="top"><h1>'+(S.nick?esc(S.nick)+'님의 루틴':'루틴')+'</h1><div class="toplinks"><button class="link" data-act="history">운동 기록</button>'+
+    '<button class="link" data-act="settings">설정</button></div></header>';
   h+=installBanner();
   if(STANDALONE&&S.drive==='need'){
     h+='<section class="resume"><p>Google 드라이브 연결이 만료됐어요</p><button class="btn primary wide" data-act="drive-sync">다시 연결</button></section>';
@@ -757,7 +863,7 @@ function facts(e){
 }
 function vDone(){
   var e=S.lastDone;
-  return '<header class="top"><h1>운동 끝</h1></header>'+
+  return '<header class="top"><h1>'+(S.nick?esc(S.nick)+'님, 수고했어요':'운동 끝')+'</h1></header>'+
     '<p class="pos">'+esc(e.routineName)+'</p>'+
     '<p class="done-time num">'+fmt(e.durationSec)+'</p>'+facts(e)+doneDelta(e)+logList(e.items)+
     '<div class="stack"><button class="btn primary wide" data-act="home">루틴 목록으로</button></div>';
@@ -1034,7 +1140,7 @@ var ACT={
     if(s){R.cur={reps:s.reps,weight:s.weight||R.cur.weight};persistRun();render();}
   },
   home:function(){go('home');},
-  settings:function(){if(STANDALONE){gisLoad().catch(function(){});go('settings');}},
+  settings:function(){if(STANDALONE) gisLoad().catch(function(){});go('settings');},
   'drive-connect':function(){
     var cid=(G.clientId||DRIVE_CLIENT_ID||'').trim();
     if(!/\.apps\.googleusercontent\.com$/.test(cid)){
@@ -1046,6 +1152,20 @@ var ACT={
   'drive-off':function(){twoStep('drive-off',function(){
     G.on=false;G.token=null;G.exp=0;G.fileId=null;saveG();S.drive='off';S.driveErr='';render();
   });},
+  'backup-share':function(){
+    var b=backupData();
+    try{
+      var f=new File([b.data],b.name,{type:'text/plain'});
+      if(navigator.canShare&&navigator.canShare({files:[f]})){
+        navigator.share({files:[f],title:'루틴 타이머 백업'}).then(function(){
+          LS.set('rt.lastBackup',Date.now());backupNote('백업 파일을 내보냈어요.');
+        },function(){});
+        return;
+      }
+    }catch(e){}
+    backupDownload(b);
+  },
+  'backup-save':function(){backupDownload(backupData());},
   'install-later':function(){LS.set('rt.installLater',true);render();},
   share:function(){
     var url=location.origin+location.pathname;
@@ -1104,6 +1224,7 @@ document.addEventListener('click',function(e){
 });
 document.addEventListener('input',function(e){
   var t=e.target;
+  if(S.view==='settings'&&t.id==='nick'){S.nick=t.value.trim().slice(0,12);LS.set('rt.nick',S.nick);return;}
   if(S.view==='settings'&&t.id==='drive-cid'){G.clientId=t.value.trim();saveG();return;}
   if(S.view==='pick'&&S.draft&&t.id==='pick-q'){
     S.pick.q=t.value;
@@ -1116,6 +1237,15 @@ document.addEventListener('input',function(e){
   var f=t.dataset.f; if(!f) return;
   var li=t.closest('[data-i]');
   if(li) S.draft.exercises[+li.dataset.i][f]=t.value; else S.draft[f]=t.value;
+});
+
+document.addEventListener('change',function(e){
+  var t=e.target;
+  if(!t||t.id!=='backup-file'||!t.files||!t.files[0]) return;
+  var fr=new FileReader();
+  fr.onload=function(){importBackup(String(fr.result||''));};
+  fr.onerror=function(){backupNote('파일을 열지 못했어요.',true);};
+  fr.readAsText(t.files[0]);
 });
 
 render();
