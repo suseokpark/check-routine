@@ -555,6 +555,34 @@ function driveQueue(){
   clearTimeout(driveTimer);
   driveTimer=setTimeout(function(){driveSync(false);},1500);
 }
+function isInstalled(){
+  try{return window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;}catch(e){return false;}
+}
+function installBanner(){
+  if(!STANDALONE||isInstalled()||LS.get('rt.installLater')) return '';
+  var ua=navigator.userAgent||'',android=/Android/i.test(ua),ios=/iPhone|iPad|iPod/i.test(ua);
+  var inapp=/KAKAOTALK|NAVER\(inapp|Instagram|FBAN|FBAV|Line\//i.test(ua);
+  var later='<button class="btn line" data-act="install-later">나중에</button>';
+  var laterWide='<button class="btn line wide" data-act="install-later">닫기</button>';
+  if(installEvt){
+    return '<section class="resume"><p>앱으로 설치하면 홈 화면에서 바로 열 수 있어요</p><div class="pair">'+
+      '<button class="btn primary" data-act="install">앱 설치</button>'+later+'</div></section>';
+  }
+  if(inapp&&android){
+    return '<section class="resume"><p>이 화면에서는 앱으로 설치할 수 없어요. Chrome으로 열면 설치 버튼이 나와요.</p><div class="pair">'+
+      '<a class="btn primary" style="display:flex;align-items:center;justify-content:center;text-decoration:none" href="intent://'+esc(location.host+location.pathname)+'#Intent;scheme=https;package=com.android.chrome;end">Chrome으로 열기</a>'+later+'</div></section>';
+  }
+  if(inapp){
+    return '<section class="resume"><p>이 화면에서는 앱으로 설치할 수 없어요. 메뉴에서 “Safari로 열기”를 누른 뒤 다시 시도해 주세요.</p>'+laterWide+'</section>';
+  }
+  if(ios){
+    return '<section class="resume"><p>아이폰은 Safari 아래쪽 공유 버튼을 누른 뒤 “홈 화면에 추가”를 고르면 앱처럼 설치돼요.</p>'+laterWide+'</section>';
+  }
+  if(android){
+    return '<section class="resume"><p>브라우저 메뉴에서 “홈 화면에 추가” 또는 “앱 설치”를 누르면 앱처럼 설치돼요.</p>'+laterWide+'</section>';
+  }
+  return '';
+}
 function vSettings(){
   var h='<header class="top"><h1>설정</h1><button class="link" data-act="home">루틴 목록</button></header>';
   h+='<h2 class="sec now">Google 드라이브 연동</h2>';
@@ -584,6 +612,9 @@ function vSettings(){
   if(installed) h+='<p class="restday">이미 앱으로 설치해서 쓰고 있어요.</p>';
   else if(installEvt) h+='<button class="btn solid wide" data-act="install">홈 화면에 앱 설치</button>';
   else h+='<p class="restday">Chrome 메뉴에서 “홈 화면에 추가” 또는 “앱 설치”를 누르면 주소창 없이 앱처럼 열려요.</p>';
+  h+='<h2 class="sec">다른 사람에게 알려주기</h2>';
+  h+='<button class="btn line wide" data-act="share">앱 주소 공유하기</button>';
+  if(S.shareMsg) h+='<p class="ok" style="margin-top:8px">'+esc(S.shareMsg)+'</p>';
   return h;
 }
 
@@ -591,6 +622,7 @@ function vSettings(){
 function vHome(){
   var h='<header class="top"><h1>루틴</h1><div class="toplinks"><button class="link" data-act="history">운동 기록</button>'+
     (STANDALONE?'<button class="link" data-act="settings">설정</button>':'')+'</div></header>';
+  h+=installBanner();
   if(STANDALONE&&S.drive==='need'){
     h+='<section class="resume"><p>Google 드라이브 연결이 만료됐어요</p><button class="btn primary wide" data-act="drive-sync">다시 연결</button></section>';
   }
@@ -1014,6 +1046,14 @@ var ACT={
   'drive-off':function(){twoStep('drive-off',function(){
     G.on=false;G.token=null;G.exp=0;G.fileId=null;saveG();S.drive='off';S.driveErr='';render();
   });},
+  'install-later':function(){LS.set('rt.installLater',true);render();},
+  share:function(){
+    var url=location.origin+location.pathname;
+    if(navigator.share){navigator.share({title:'루틴 타이머',text:'운동 루틴과 휴식 타이머',url:url}).catch(function(){});return;}
+    if(navigator.clipboard){
+      navigator.clipboard.writeText(url).then(function(){S.shareMsg='주소를 복사했어요.';render();},function(){S.shareMsg=url;render();});
+    }else{S.shareMsg=url;render();}
+  },
   install:function(){
     if(!installEvt) return;
     var ev=installEvt;installEvt=null;
@@ -1088,8 +1128,8 @@ if(STANDALONE){
     var il=document.createElement('link');il.rel='apple-touch-icon';il.href='icon-192.png';document.head.appendChild(il);
     if('serviceWorker' in navigator&&location.protocol==='https:') navigator.serviceWorker.register('sw.js').catch(function(){});
   }catch(e){}
-  window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();installEvt=e;if(S.view==='settings') render();});
-  window.addEventListener('appinstalled',function(){installEvt=null;if(S.view==='settings') render();});
+  window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();installEvt=e;if(S.view==='settings'||S.view==='home') render();});
+  window.addEventListener('appinstalled',function(){installEvt=null;if(S.view==='settings'||S.view==='home') render();});
   document.addEventListener('visibilitychange',function(){
     if(document.visibilityState==='visible'&&G.on&&Date.now()-(G.lastSync||0)>300000) driveSync(false);
   });
